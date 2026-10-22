@@ -1,0 +1,13 @@
+// Copy to Config/Signing.local.xcconfig (gitignored) and fill in.
+
+ZENITH_BUNDLE_ID = com.yourcompany.zenithplayer
+DEVELOPMENT_TEAM = ABCDE12345
+
+// App Store builds with manual signing (optional):
+// CODE_SIGN_STYLE[config=Release] = Manual
+// CODE_SIGN_IDENTITY[config=Release][sdk=appletvos*] = iPhone Distribution
+// CODE_SIGN_IDENTITY[config=Release][sdk=iphoneos*] = iPhone Distribution
+// CODE_SIGN_IDENTITY[config=Release][sdk=macosx*] = Apple Distribution
+// ZENITH_TVOS_PROFILE = <tvOS App Store profile UUID or name>
+// ZENITH_IPAD_PROFILE = <iOS App Store profile UUID or name>
+// ZENITH_MAC_PROFILE = <macOS App Store profile name>

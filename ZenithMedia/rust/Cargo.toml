@@ -1,0 +1,22 @@
+[package]
+name = "zenith-media"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Thin C ABI over transmux streaming TS demux and oxideav-mp2 for the zenith-tv Apple player"
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+transmux = "0.27.7"
+broadcast-common = "10"
+buffering-runtime = "0.1.0"
+oxideav-mp2 = "=0.0.10"
+
+[profile.release]
+panic = "abort"
+lto = "thin"
+
+[workspace]

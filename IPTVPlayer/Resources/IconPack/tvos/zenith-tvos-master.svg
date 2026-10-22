@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(512 300) rotate(90) scale(620)">
+      <stop offset="0" stop-color="#1A2332"/>
+      <stop offset="1" stop-color="#151D28"/>
+    </radialGradient>
+
+    <radialGradient id="apexGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(512 240) rotate(90) scale(220)">
+      <stop offset="0" stop-color="#4FC978" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#4FC978" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#4FC978" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="arcStroke" x1="512" y1="620" x2="512" y2="744" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E0E8F0" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#E0E8F0" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="32" y="32" width="960" height="960" rx="200" fill="url(#bg)"/>
+  <rect x="32.5" y="32.5" width="959" height="959" rx="199.5" stroke="#FFFFFF" stroke-opacity="0.06"/>
+
+  <circle cx="512" cy="240" r="170" fill="url(#apexGlow)"/>
+
+  <circle cx="512" cy="214" r="20" fill="#4FC978"/>
+  <circle cx="512" cy="214" r="7" fill="#E0E8F0" fill-opacity="0.90"/>
+
+  <path
+    d="M252 744C324 662 413 620 512 620C611 620 700 662 772 744"
+    stroke="url(#arcStroke)"
+    stroke-width="28"
+    stroke-linecap="round"
+  />
+</svg>

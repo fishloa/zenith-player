@@ -1,0 +1,13 @@
+[package]
+name = "stream-cut"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Cut a captured MPEG-TS so it starts on a strict IDR/IRAP; dev-only test-fixture tool"
+
+[dependencies]
+transmux = "0.27"
+broadcast-common = "10"
+serde_json = "1"
+
+[workspace]

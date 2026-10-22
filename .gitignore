@@ -1,0 +1,67 @@
+# Xcode
+xcuserdata/
+*.xcworkspace/
+DerivedData/
+build/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# OS
+.DS_Store
+*.swp
+*~
+
+# Logs
+*.log
+
+# Superpowers
+.superpowers/
+
+# Worktrees
+.worktrees/
+
+# Secrets
+.env
+build/
+testdata/streams/
+tools/stream-cut/target/
+tools/decode-probe/Fixtures/
+tools/decode-probe/DecodeProbe.xcodeproj/
+tools/decode-probe/rust/target/
+tools/paff-gen/target/
+testdata/audio/
+ZenithMedia/rust/target/
+testdata/paff/
+testdata/deint/
+ZenithMedia/.build/
+testdata/verify-*/
+testdata/traces/
+.delegate/
+.worktree/
+
+# Local signing identity
+Config/Signing.local.xcconfig
+scripts/submit-external-testing.py
+scripts/upload-testflight.py
+__pycache__/

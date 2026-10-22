@@ -1,0 +1,39 @@
+name: DecodeProbe
+options:
+  deploymentTarget:
+    tvOS: "17.0"
+packages:
+  ZenithMedia:
+    path: ../../ZenithMedia
+targets:
+  DecodeProbe:
+    type: application
+    platform: tvOS
+    preBuildScripts:
+      - name: Build Rust (zenith-media + probe_rs)
+        script: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          cd "$PROJECT_DIR/rust" && cargo build --release --target aarch64-apple-tvos
+          cd "$PROJECT_DIR/../../ZenithMedia/rust" && cargo build --release --target aarch64-apple-tvos
+        basedOnDependencyAnalysis: false
+    dependencies:
+      - package: ZenithMedia
+    sources:
+      - path: Sources
+        excludes: ["Bridging.h"]
+      - path: Fixtures
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ${PROBE_BUNDLE_ID}
+        DEVELOPMENT_TEAM: ${TEAM_ID}
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "5.9"
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/Bridging.h
+        OTHER_LDFLAGS: $(PROJECT_DIR)/rust/target/aarch64-apple-tvos/release/libprobe_rs.a
+        LIBRARY_SEARCH_PATHS: $(PROJECT_DIR)/../../ZenithMedia/rust/target/aarch64-apple-tvos/release
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"

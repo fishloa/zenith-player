@@ -1,0 +1,16 @@
+[package]
+name = "probe_rs"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+nanomp3-core = "0.2.0"
+
+[profile.release]
+panic = "abort"
+
+[workspace]

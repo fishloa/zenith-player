@@ -1,0 +1,18 @@
+// Signing and identity for every target. Placeholders: put your own values in
+// Config/Signing.local.xcconfig (gitignored, see Signing.local.xcconfig.example).
+
+// Bundle ID of the store app. Debug builds append .tvos / .ipad / .mac so they
+// install beside it; tests append .tvos.tests.
+ZENITH_BUNDLE_ID = org.example.zenithplayer
+
+// Your Apple Developer team ID. Empty builds for the simulator only.
+DEVELOPMENT_TEAM =
+
+// Automatic signing by default. Release builds for the App Store may switch to
+// manual signing with named profiles in the local file.
+CODE_SIGN_STYLE = Automatic
+ZENITH_TVOS_PROFILE =
+ZENITH_IPAD_PROFILE =
+ZENITH_MAC_PROFILE =
+
+#include? "Signing.local.xcconfig"

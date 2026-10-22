@@ -1,0 +1,1065 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CPREV_BF01CPREV_BF01CPREV_BF0 /* ChannelPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CPREV_FR01CPREV_FR01CPREV_FR0 /* ChannelPreview.swift */; };
+		CPREV_BF02CPREV_BF02CPREV_BF0 /* ChannelPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CPREV_FR01CPREV_FR01CPREV_FR0 /* ChannelPreview.swift */; };
+		CPREV_BF03CPREV_BF03CPREV_BF0 /* ChannelPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CPREV_FR01CPREV_FR01CPREV_FR0 /* ChannelPreview.swift */; };
+		CPRVT_BF01CPRVT_BF01CPRVT_BF0 /* ChannelPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CPRVT_FR01CPRVT_FR01CPRVT_FR0 /* ChannelPreviewTests.swift */; };
+		04699141E6A682353316C523 /* EPGEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */; };
+		05181839E4104156B4729551 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */; };
+		A1B2C3D4E5F6A1B2C3D4E5F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */; };
+		10288AB18DA671D0EA91E105 /* ChannelGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */; };
+		168B7E5B49654403BF9008BC /* ChannelTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C4604BACC3BAAB10F229FC /* ChannelTile.swift */; };
+		4467906BD8B4C8DB8A8631EC /* EPGService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808D81D527C6587AD99E82BD /* EPGService.swift */; };
+		555543EE0639C95627E6D5A1 /* SVGImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */; };
+		PLATIMG_BF01PLATIMG_BF01 /* PlatformImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */; };
+		572A900BF6C6CB1EC67A2D64 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0F77C13C190A5C46104348 /* M3UParser.swift */; };
+		5F6EA0A016089649C893FD84 /* IPTVPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */; };
+		5FA99ACF429DF11DC2119165 /* IPTVPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E696E3CE8708C1A342B542 /* IPTVPlayerTests.swift */; };
+		6A3A3547E06C8A9634D06C60 /* ZenithDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */; };
+		71A7B8DE02198C9FECBCB924 /* PlaylistIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A006140077D7351DBDB55879 /* PlaylistIntegrationTests.swift */; };
+		846AD7533AF6AAFD434F0A1D /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7CCF45B5DA412002EE99B4 /* Channel.swift */; };
+		952501DFA0F746DF01C6A598 /* EPGOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */; };
+		962904A0AA81A751D438F9BC /* M3UParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2DBFC946E11D1193741231 /* M3UParserTests.swift */; };
+		B2B9D2BEB8E16B868A76DABC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E675089B40A5779F2175D002 /* SettingsView.swift */; };
+		4E9BB0CCF2BB77EE728F926B /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C3A42E37BE0153F57094FC /* SetupView.swift */; };
+		B3C2436BCD2B5239443A26B4 /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996DC6ABD918D64CD3AD0246 /* CountrySelectionView.swift */; };
+		B585DB8B5E353DE97A8727AF /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5095C43F640060E1A354A701 /* SettingsStoreTests.swift */; };
+		364F418EB24AC3617015245B /* PlaylistServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1347546EDC373037EFC35EEA /* PlaylistServiceTests.swift */; };
+		BABF735A7C6F5693D24ABBD3 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4254372B7A6B0C6B416097 /* SettingsStore.swift */; };
+		BF1D2EF4BD1C8313F1935C1D /* ZenithDiscoveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */; };
+		2896EC0B729A3056F0177AA4 /* ImageCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CD9218F001821DF3A85C12 /* ImageCacheTests.swift */; };
+		DA796AF72DB72189792B2FFF /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = 647E9D55930FCE870B7B9264 /* SVGKit */; };
+		DDA550614CA8E626B8EF401A /* EPGServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B93F799E86C14CD78507DABC /* EPGServiceTests.swift */; };
+		EEBCA48DEBD612A2CD860982 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231EE19D96369980B913835A /* ImageCache.swift */; };
+		EE2EA8CD7E839D6E64974627 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A28781F9DC52B039328895 /* PlayerView.swift */; };
+		ZMVDDD001ZMVDDD001ZMVDDD0 /* PlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */; };
+		B2C3D4E5F6A7B2C3D4E5F6A7 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A2B3C4D5E6F7A2B3C4D5E6F7 /* AppIcon.png */; };
+		B3C4D5E6F7A8B3C4D5E6F7A8 /* AppIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A3B4C5D6E7F8A3B4C5D6E7F8 /* AppIcon@2x.png */; };
+		B4C5D6E7F8A9B4C5D6E7F8A9 /* TopShelf.png in Resources */ = {isa = PBXBuildFile; fileRef = A4B5C6D7E8F9A4B5C6D7E8F9 /* TopShelf.png */; };
+		B5C6D7E8F9A0B5C6D7E8F9A0 /* TopShelf@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A5B6C7D8E9F0A5B6C7D8E9F0 /* TopShelf@2x.png */; };
+		B6C7D8E9F0A1B6C7D8E9F0A1 /* TopShelfWide.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B7C8D9E0F1A6B7C8D9E0F1 /* TopShelfWide.png */; };
+		B7C8D9E0F1A2B7C8D9E0F1A2 /* TopShelfWide@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A7B8C9D0E1F2A7B8C9D0E1F2 /* TopShelfWide@2x.png */; };
+		OBJC004OBJC004OBJC004OBJC /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */; };
+		IPAD_BF01IPAD_BF01IPAD_BF0 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7CCF45B5DA412002EE99B4 /* Channel.swift */; };
+		IPAD_BF02IPAD_BF02IPAD_BF0 /* EPGEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */; };
+		IPAD_BF03IPAD_BF03IPAD_BF0 /* EPGService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808D81D527C6587AD99E82BD /* EPGService.swift */; };
+		IPAD_BF04IPAD_BF04IPAD_BF0 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231EE19D96369980B913835A /* ImageCache.swift */; };
+		IPAD_BF05IPAD_BF05IPAD_BF0 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0F77C13C190A5C46104348 /* M3UParser.swift */; };
+		IPAD_BF06IPAD_BF06IPAD_BF0 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */; };
+		IPAD_BF07IPAD_BF07IPAD_BF0 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4254372B7A6B0C6B416097 /* SettingsStore.swift */; };
+		IPAD_BF08IPAD_BF08IPAD_BF0 /* ZenithDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */; };
+		IPAD_BF09IPAD_BF09IPAD_BF0 /* ChannelGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */; };
+		IPAD_BF10IPAD_BF10IPAD_BF1 /* ChannelTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C4604BACC3BAAB10F229FC /* ChannelTile.swift */; };
+		IPAD_BF11IPAD_BF11IPAD_BF1 /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996DC6ABD918D64CD3AD0246 /* CountrySelectionView.swift */; };
+		IPAD_BF12IPAD_BF12IPAD_BF1 /* EPGOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */; };
+		IPAD_BF13IPAD_BF13IPAD_BF1 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A28781F9DC52B039328895 /* PlayerView.swift */; };
+		IPAD_BF14IPAD_BF14IPAD_BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E675089B40A5779F2175D002 /* SettingsView.swift */; };
+		9B022FA4B11E30A27C006BE3 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C3A42E37BE0153F57094FC /* SetupView.swift */; };
+		IPAD_BF15IPAD_BF15IPAD_BF1 /* SVGImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */; };
+		IPAD_BFPLAT01IPAD_BFPLAT0 /* PlatformImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */; };
+		IPAD_BF16IPAD_BF16IPAD_BF1 /* IPTVPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */; };
+		IPAD_BF17IPAD_BF17IPAD_BF1 /* PlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */; };
+		IPAD_BF18IPAD_BF18IPAD_BF1 /* iPadRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */; };
+		IPAD_BF19IPAD_BF19IPAD_BF1 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */; };
+		IPAD_BF20IPAD_BF20IPAD_BF2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */; };
+		IPAD_BF22IPAD_BF22IPAD_BF2 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = IPAD_PD01IPAD_PD01IPAD_PD0 /* SVGKit */; };
+		IPAD_BF23IPAD_BF23IPAD_BF2 /* ZenithMedia in Frameworks */ = {isa = PBXBuildFile; productRef = IPAD_PD02IPAD_PD02IPAD_PD0 /* ZenithMedia */; };
+		MAC_BF01MAC_BF01MAC_BF01 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7CCF45B5DA412002EE99B4 /* Channel.swift */; };
+		MAC_BF02MAC_BF02MAC_BF02 /* EPGEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */; };
+		MAC_BF03MAC_BF03MAC_BF03 /* EPGService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808D81D527C6587AD99E82BD /* EPGService.swift */; };
+		MAC_BF04MAC_BF04MAC_BF04 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231EE19D96369980B913835A /* ImageCache.swift */; };
+		MAC_BF05MAC_BF05MAC_BF05 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0F77C13C190A5C46104348 /* M3UParser.swift */; };
+		MAC_BF06MAC_BF06MAC_BF06 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */; };
+		MAC_BF07MAC_BF07MAC_BF07 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4254372B7A6B0C6B416097 /* SettingsStore.swift */; };
+		MAC_BF08MAC_BF08MAC_BF08 /* ZenithDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */; };
+		MAC_BF09MAC_BF09MAC_BF09 /* ChannelGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */; };
+		MAC_BF10MAC_BF10MAC_BF10 /* ChannelTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C4604BACC3BAAB10F229FC /* ChannelTile.swift */; };
+		MAC_BF11MAC_BF11MAC_BF11 /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996DC6ABD918D64CD3AD0246 /* CountrySelectionView.swift */; };
+		MAC_BF12MAC_BF12MAC_BF12 /* EPGOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */; };
+		MAC_BF13MAC_BF13MAC_BF13 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A28781F9DC52B039328895 /* PlayerView.swift */; };
+		MAC_BF14MAC_BF14MAC_BF14 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E675089B40A5779F2175D002 /* SettingsView.swift */; };
+		8BA29B76E7DD075CA7DD2C4A /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C3A42E37BE0153F57094FC /* SetupView.swift */; };
+		MAC_BF15MAC_BF15MAC_BF15 /* SVGImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */; };
+		MAC_BF16MAC_BF16MAC_BF16 /* IPTVPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */; };
+		MAC_BF17MAC_BF17MAC_BF17 /* PlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */; };
+		MAC_BF18MAC_BF18MAC_BF18 /* iPadRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */; };
+		MAC_BF19MAC_BF19MAC_BF19 /* PlatformImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */; };
+		MAC_BF20MAC_BF20MAC_BF20 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */; };
+		MAC_BF21MAC_BF21MAC_BF21 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */; };
+		MAC_BF23MAC_BF23MAC_BF23 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = MAC_PD01MAC_PD01MAC_PD01 /* SVGKit */; };
+		MAC_BF24MAC_BF24MAC_BF24 /* ZenithMedia in Frameworks */ = {isa = PBXBuildFile; productRef = MAC_PD02MAC_PD02MAC_PD02 /* ZenithMedia */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8CF29844C5C55EA505D6A0ED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB91D5AA0079060AA1D39217 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD8FC6EA2D50082894F50CB1;
+			remoteInfo = IPTVPlayer;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		CPREV_FR01CPREV_FR01CPREV_FR0 /* ChannelPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelPreview.swift; sourceTree = "<group>"; };
+		CPRVT_FR01CPRVT_FR01CPRVT_FR0 /* ChannelPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelPreviewTests.swift; sourceTree = "<group>"; };
+		02E696E3CE8708C1A342B542 /* IPTVPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVPlayerTests.swift; sourceTree = "<group>"; };
+		231EE19D96369980B913835A /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
+		F1CD9218F001821DF3A85C12 /* ImageCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheTests.swift; sourceTree = "<group>"; };
+		199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelGridView.swift; sourceTree = "<group>"; };
+		1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPGEvent.swift; sourceTree = "<group>"; };
+		34C4604BACC3BAAB10F229FC /* ChannelTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelTile.swift; sourceTree = "<group>"; };
+		47CBDF3EDE418CE1A9D38E3A /* IPTVPlayer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IPTVPlayer.entitlements; sourceTree = "<group>"; };
+		5095C43F640060E1A354A701 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
+		1347546EDC373037EFC35EEA /* PlaylistServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistServiceTests.swift; sourceTree = "<group>"; };
+		52A28781F9DC52B039328895 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		5B2DBFC946E11D1193741231 /* M3UParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UParserTests.swift; sourceTree = "<group>"; };
+		6A5E790D5CBE538127187872 /* Zenith Player.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zenith Player.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6FBA0FCFD1651C15AC9FA2BF /* IPTVPlayerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = IPTVPlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		73D22CC7D414CEA989142B32 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGImageView.swift; sourceTree = "<group>"; };
+		PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformImage.swift; sourceTree = "<group>"; };
+		7A4254372B7A6B0C6B416097 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		808D81D527C6587AD99E82BD /* EPGService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPGService.swift; sourceTree = "<group>"; };
+		834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPGOverlayView.swift; sourceTree = "<group>"; };
+		8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenithDiscoveryServiceTests.swift; sourceTree = "<group>"; };
+		996DC6ABD918D64CD3AD0246 /* CountrySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountrySelectionView.swift; sourceTree = "<group>"; };
+		9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenithDiscoveryService.swift; sourceTree = "<group>"; };
+		A006140077D7351DBDB55879 /* PlaylistIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistIntegrationTests.swift; sourceTree = "<group>"; };
+		B93F799E86C14CD78507DABC /* EPGServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPGServiceTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2B3C4D5E6F7A2B3C4D5E6F7 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon.png"; sourceTree = "<group>"; };
+		A3B4C5D6E7F8A3B4C5D6E7F8 /* AppIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon@2x.png"; sourceTree = "<group>"; };
+		A4B5C6D7E8F9A4B5C6D7E8F9 /* TopShelf.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TopShelf.png"; sourceTree = "<group>"; };
+		A5B6C7D8E9F0A5B6C7D8E9F0 /* TopShelf@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TopShelf@2x.png"; sourceTree = "<group>"; };
+		A6B7C8D9E0F1A6B7C8D9E0F1 /* TopShelfWide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TopShelfWide.png"; sourceTree = "<group>"; };
+		A7B8C9D0E1F2A7B8C9D0E1F2 /* TopShelfWide@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TopShelfWide@2x.png"; sourceTree = "<group>"; };
+		DB7CCF45B5DA412002EE99B4 /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
+		DF0F77C13C190A5C46104348 /* M3UParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UParser.swift; sourceTree = "<group>"; };
+		E675089B40A5779F2175D002 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		73C3A42E37BE0153F57094FC /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
+		FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVPlayerApp.swift; sourceTree = "<group>"; };
+		ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerLayerView.swift; sourceTree = "<group>"; };
+		OBJC001OBJC001OBJC001OBJC /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptionCatcher.h; sourceTree = "<group>"; };
+		OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptionCatcher.m; sourceTree = "<group>"; };
+		OBJC003OBJC003OBJC003OBJC /* IPTVPlayer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IPTVPlayer-Bridging-Header.h"; sourceTree = "<group>"; };
+		IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadRootView.swift; sourceTree = "<group>"; };
+		IPAD_FR02IPAD_FR02IPAD_FR0 /* ZenithTV-iPad.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ZenithTV-iPad.entitlements"; sourceTree = "<group>"; };
+		IPAD_FR03IPAD_FR03IPAD_FR0 /* Zenith Player iPad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zenith Player iPad.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		MAC_FR01MAC_FR01MAC_FR01 /* ZenithTV-Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ZenithTV-Mac.entitlements"; sourceTree = "<group>"; };
+		MAC_FR02MAC_FR02MAC_FR02 /* Info-Mac.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Mac.plist"; sourceTree = "<group>"; };
+		MAC_FR03MAC_FR03MAC_FR03 /* Zenith Player Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zenith Player Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0SIGN0XCCONFIG0000000001 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Signing.xcconfig; path = Config/Signing.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		ACDC59A2D5EBF1FEF5BBD579 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA796AF72DB72189792B2FFF /* SVGKit in Frameworks */,
+				ZMVAAA001ZMVAAA001ZMVAAA0 /* ZenithMedia in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		IPAD_FW01IPAD_FW01IPAD_FW0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				IPAD_BF22IPAD_BF22IPAD_BF2 /* SVGKit in Frameworks */,
+				IPAD_BF23IPAD_BF23IPAD_BF2 /* ZenithMedia in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MAC_FW01MAC_FW01MAC_FW01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MAC_BF23MAC_BF23MAC_BF23 /* SVGKit in Frameworks */,
+				MAC_BF24MAC_BF24MAC_BF24 /* ZenithMedia in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2CBEFE49835FAADE4C385ABA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6A5E790D5CBE538127187872 /* Zenith Player.app */,
+				6FBA0FCFD1651C15AC9FA2BF /* IPTVPlayerTests.xctest */,
+				IPAD_FR03IPAD_FR03IPAD_FR0 /* Zenith Player iPad.app */,
+				MAC_FR03MAC_FR03MAC_FR03 /* Zenith Player Mac.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		577D0F7DF7CDB24D76370DDE /* IPTVPlayerTests */ = {
+			isa = PBXGroup;
+			children = (
+				CPRVT_FR01CPRVT_FR01CPRVT_FR0 /* ChannelPreviewTests.swift */,
+				B93F799E86C14CD78507DABC /* EPGServiceTests.swift */,
+				F1CD9218F001821DF3A85C12 /* ImageCacheTests.swift */,
+				02E696E3CE8708C1A342B542 /* IPTVPlayerTests.swift */,
+				5B2DBFC946E11D1193741231 /* M3UParserTests.swift */,
+				A006140077D7351DBDB55879 /* PlaylistIntegrationTests.swift */,
+				5095C43F640060E1A354A701 /* SettingsStoreTests.swift */,
+				1347546EDC373037EFC35EEA /* PlaylistServiceTests.swift */,
+				8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */,
+			);
+			path = IPTVPlayerTests;
+			sourceTree = "<group>";
+		};
+		59C9503087DB7D1DF29CE6F2 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DB7CCF45B5DA412002EE99B4 /* Channel.swift */,
+				1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		5B6294AE160177BC45D9D439 /* IPTVPlayer */ = {
+			isa = PBXGroup;
+			children = (
+				73D22CC7D414CEA989142B32 /* Info.plist */,
+				47CBDF3EDE418CE1A9D38E3A /* IPTVPlayer.entitlements */,
+				FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */,
+				OBJC003OBJC003OBJC003OBJC /* IPTVPlayer-Bridging-Header.h */,
+				IPAD_FR02IPAD_FR02IPAD_FR0 /* ZenithTV-iPad.entitlements */,
+				MAC_FR01MAC_FR01MAC_FR01 /* ZenithTV-Mac.entitlements */,
+				MAC_FR02MAC_FR02MAC_FR02 /* Info-Mac.plist */,
+				59C9503087DB7D1DF29CE6F2 /* Models */,
+				789D1B752A72EC3E83477298 /* Resources */,
+				BA61249908D0A72E2DB7988D /* Services */,
+				94F100B80979C37E352405BE /* Views */,
+			);
+			path = IPTVPlayer;
+			sourceTree = "<group>";
+		};
+		789D1B752A72EC3E83477298 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */,
+				A2B3C4D5E6F7A2B3C4D5E6F7 /* AppIcon.png */,
+				A3B4C5D6E7F8A3B4C5D6E7F8 /* AppIcon@2x.png */,
+				A4B5C6D7E8F9A4B5C6D7E8F9 /* TopShelf.png */,
+				A5B6C7D8E9F0A5B6C7D8E9F0 /* TopShelf@2x.png */,
+				A6B7C8D9E0F1A6B7C8D9E0F1 /* TopShelfWide.png */,
+				A7B8C9D0E1F2A7B8C9D0E1F2 /* TopShelfWide@2x.png */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		94F100B80979C37E352405BE /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */,
+				34C4604BACC3BAAB10F229FC /* ChannelTile.swift */,
+				996DC6ABD918D64CD3AD0246 /* CountrySelectionView.swift */,
+				834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */,
+				52A28781F9DC52B039328895 /* PlayerView.swift */,
+				ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */,
+				E675089B40A5779F2175D002 /* SettingsView.swift */,
+				73C3A42E37BE0153F57094FC /* SetupView.swift */,
+				78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */,
+				PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */,
+				IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		BA61249908D0A72E2DB7988D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CPREV_FR01CPREV_FR01CPREV_FR0 /* ChannelPreview.swift */,
+				808D81D527C6587AD99E82BD /* EPGService.swift */,
+				231EE19D96369980B913835A /* ImageCache.swift */,
+				DF0F77C13C190A5C46104348 /* M3UParser.swift */,
+				ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */,
+				7A4254372B7A6B0C6B416097 /* SettingsStore.swift */,
+				9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */,
+				OBJC001OBJC001OBJC001OBJC /* ObjCExceptionCatcher.h */,
+				OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FCBE965933F6854474B79248 = {
+			isa = PBXGroup;
+			children = (
+				5B6294AE160177BC45D9D439 /* IPTVPlayer */,
+				577D0F7DF7CDB24D76370DDE /* IPTVPlayerTests */,
+				2CBEFE49835FAADE4C385ABA /* Products */,
+				0SIGN0XCCONFIG0000000001 /* Signing.xcconfig */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6C9166B118BC8332F5E625B0 /* IPTVPlayerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9388010F10DBBACBF01CDDF4 /* Build configuration list for PBXNativeTarget "IPTVPlayerTests" */;
+			buildPhases = (
+				BA33663ACC0858D3F509D8BE /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				787C36BA60A0DCC0B7480957 /* PBXTargetDependency */,
+			);
+			name = IPTVPlayerTests;
+			packageProductDependencies = (
+			);
+			productName = IPTVPlayerTests;
+			productReference = 6FBA0FCFD1651C15AC9FA2BF /* IPTVPlayerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DD8FC6EA2D50082894F50CB1 /* IPTVPlayer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B27AD3616245E203E39AA85A /* Build configuration list for PBXNativeTarget "IPTVPlayer" */;
+			buildPhases = (
+				ZMSCRTV01ZMSCRTV01ZMSCRT /* Build zenith-media (Rust) */,
+				3F22B7D10281F6DA60F05EC3 /* Sources */,
+				77AE39763BF594DF26467702 /* Resources */,
+				ACDC59A2D5EBF1FEF5BBD579 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IPTVPlayer;
+			packageProductDependencies = (
+				647E9D55930FCE870B7B9264 /* SVGKit */,
+				ZMVBBB001ZMVBBB001ZMVBBB0 /* ZenithMedia */,
+			);
+			productName = IPTVPlayer;
+			productReference = 6A5E790D5CBE538127187872 /* Zenith Player.app */;
+			productType = "com.apple.product-type.application";
+		};
+		IPAD_TG01IPAD_TG01IPAD_TG0 /* ZenithTV-iPad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = IPAD_CL01IPAD_CL01IPAD_CL0 /* Build configuration list for PBXNativeTarget "ZenithTV-iPad" */;
+			buildPhases = (
+				ZMSCRIP01ZMSCRIP01ZMSCRI /* Build zenith-media (Rust) */,
+				IPAD_SP01IPAD_SP01IPAD_SP0 /* Sources */,
+				IPAD_RP01IPAD_RP01IPAD_RP0 /* Resources */,
+				IPAD_FW01IPAD_FW01IPAD_FW0 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ZenithTV-iPad";
+			packageProductDependencies = (
+				IPAD_PD01IPAD_PD01IPAD_PD0 /* SVGKit */,
+				IPAD_PD02IPAD_PD02IPAD_PD0 /* ZenithMedia */,
+			);
+			productName = "ZenithTV-iPad";
+			productReference = IPAD_FR03IPAD_FR03IPAD_FR0 /* Zenith Player iPad.app */;
+			productType = "com.apple.product-type.application";
+		};
+		MAC_TG01MAC_TG01MAC_TG01 /* ZenithTV-Mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = MAC_CL01MAC_CL01MAC_CL01 /* Build configuration list for PBXNativeTarget "ZenithTV-Mac" */;
+			buildPhases = (
+				ZMSCRMC01ZMSCRMC01ZMSCRM /* Build zenith-media (Rust) */,
+				MAC_SP01MAC_SP01MAC_SP01 /* Sources */,
+				MAC_RP01MAC_RP01MAC_RP01 /* Resources */,
+				MAC_FW01MAC_FW01MAC_FW01 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ZenithTV-Mac";
+			packageProductDependencies = (
+				MAC_PD01MAC_PD01MAC_PD01 /* SVGKit */,
+				MAC_PD02MAC_PD02MAC_PD02 /* ZenithMedia */,
+			);
+			productName = "ZenithTV-Mac";
+			productReference = MAC_FR03MAC_FR03MAC_FR03 /* Zenith Player Mac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BB91D5AA0079060AA1D39217 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = BA5CEF4ADB12121F6242BE1D /* Build configuration list for PBXProject "IPTVPlayer" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = FCBE965933F6854474B79248;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */,
+				ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 2CBEFE49835FAADE4C385ABA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DD8FC6EA2D50082894F50CB1 /* IPTVPlayer */,
+				6C9166B118BC8332F5E625B0 /* IPTVPlayerTests */,
+				IPAD_TG01IPAD_TG01IPAD_TG0 /* ZenithTV-iPad */,
+				MAC_TG01MAC_TG01MAC_TG01 /* ZenithTV-Mac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		77AE39763BF594DF26467702 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6A1B2C3D4E5F6 /* Assets.xcassets in Resources */,
+					B2C3D4E5F6A7B2C3D4E5F6A7 /* AppIcon.png in Resources */,
+					B3C4D5E6F7A8B3C4D5E6F7A8 /* AppIcon@2x.png in Resources */,
+					B4C5D6E7F8A9B4C5D6E7F8A9 /* TopShelf.png in Resources */,
+					B5C6D7E8F9A0B5C6D7E8F9A0 /* TopShelf@2x.png in Resources */,
+					B6C7D8E9F0A1B6C7D8E9F0A1 /* TopShelfWide.png in Resources */,
+					B7C8D9E0F1A2B7C8D9E0F1A2 /* TopShelfWide@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		IPAD_RP01IPAD_RP01IPAD_RP0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				IPAD_BF20IPAD_BF20IPAD_BF2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MAC_RP01MAC_RP01MAC_RP01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MAC_BF21MAC_BF21MAC_BF21 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		ZMSCRTV01ZMSCRTV01ZMSCRT /* Build zenith-media (Rust) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build zenith-media (Rust)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$PROJECT_DIR/ZenithMedia/rust/build-for-xcode.sh\"\n";
+		};
+		ZMSCRIP01ZMSCRIP01ZMSCRI /* Build zenith-media (Rust) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build zenith-media (Rust)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$PROJECT_DIR/ZenithMedia/rust/build-for-xcode.sh\"\n";
+		};
+		ZMSCRMC01ZMSCRMC01ZMSCRM /* Build zenith-media (Rust) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build zenith-media (Rust)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$PROJECT_DIR/ZenithMedia/rust/build-for-xcode.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3F22B7D10281F6DA60F05EC3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				846AD7533AF6AAFD434F0A1D /* Channel.swift in Sources */,
+				CPREV_BF01CPREV_BF01CPREV_BF0 /* ChannelPreview.swift in Sources */,
+				10288AB18DA671D0EA91E105 /* ChannelGridView.swift in Sources */,
+				168B7E5B49654403BF9008BC /* ChannelTile.swift in Sources */,
+				B3C2436BCD2B5239443A26B4 /* CountrySelectionView.swift in Sources */,
+				04699141E6A682353316C523 /* EPGEvent.swift in Sources */,
+				952501DFA0F746DF01C6A598 /* EPGOverlayView.swift in Sources */,
+				4467906BD8B4C8DB8A8631EC /* EPGService.swift in Sources */,
+				EEBCA48DEBD612A2CD860982 /* ImageCache.swift in Sources */,
+				5F6EA0A016089649C893FD84 /* IPTVPlayerApp.swift in Sources */,
+				572A900BF6C6CB1EC67A2D64 /* M3UParser.swift in Sources */,
+				EE2EA8CD7E839D6E64974627 /* PlayerView.swift in Sources */,
+				ZMVDDD001ZMVDDD001ZMVDDD0 /* PlayerLayerView.swift in Sources */,
+				05181839E4104156B4729551 /* PlaylistService.swift in Sources */,
+				555543EE0639C95627E6D5A1 /* SVGImageView.swift in Sources */,
+				PLATIMG_BF01PLATIMG_BF01 /* PlatformImage.swift in Sources */,
+				BABF735A7C6F5693D24ABBD3 /* SettingsStore.swift in Sources */,
+				B2B9D2BEB8E16B868A76DABC /* SettingsView.swift in Sources */,
+				4E9BB0CCF2BB77EE728F926B /* SetupView.swift in Sources */,
+				6A3A3547E06C8A9634D06C60 /* ZenithDiscoveryService.swift in Sources */,
+				OBJC004OBJC004OBJC004OBJC /* ObjCExceptionCatcher.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA33663ACC0858D3F509D8BE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CPRVT_BF01CPRVT_BF01CPRVT_BF0 /* ChannelPreviewTests.swift in Sources */,
+				2896EC0B729A3056F0177AA4 /* ImageCacheTests.swift in Sources */,
+				DDA550614CA8E626B8EF401A /* EPGServiceTests.swift in Sources */,
+				5FA99ACF429DF11DC2119165 /* IPTVPlayerTests.swift in Sources */,
+				962904A0AA81A751D438F9BC /* M3UParserTests.swift in Sources */,
+				71A7B8DE02198C9FECBCB924 /* PlaylistIntegrationTests.swift in Sources */,
+				B585DB8B5E353DE97A8727AF /* SettingsStoreTests.swift in Sources */,
+				364F418EB24AC3617015245B /* PlaylistServiceTests.swift in Sources */,
+				BF1D2EF4BD1C8313F1935C1D /* ZenithDiscoveryServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		IPAD_SP01IPAD_SP01IPAD_SP0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				IPAD_BF01IPAD_BF01IPAD_BF0 /* Channel.swift in Sources */,
+				CPREV_BF02CPREV_BF02CPREV_BF0 /* ChannelPreview.swift in Sources */,
+				IPAD_BF02IPAD_BF02IPAD_BF0 /* EPGEvent.swift in Sources */,
+				IPAD_BF03IPAD_BF03IPAD_BF0 /* EPGService.swift in Sources */,
+				IPAD_BF04IPAD_BF04IPAD_BF0 /* ImageCache.swift in Sources */,
+				IPAD_BF05IPAD_BF05IPAD_BF0 /* M3UParser.swift in Sources */,
+				IPAD_BF06IPAD_BF06IPAD_BF0 /* PlaylistService.swift in Sources */,
+				IPAD_BF07IPAD_BF07IPAD_BF0 /* SettingsStore.swift in Sources */,
+				IPAD_BF08IPAD_BF08IPAD_BF0 /* ZenithDiscoveryService.swift in Sources */,
+				IPAD_BF09IPAD_BF09IPAD_BF0 /* ChannelGridView.swift in Sources */,
+				IPAD_BF10IPAD_BF10IPAD_BF1 /* ChannelTile.swift in Sources */,
+				IPAD_BF11IPAD_BF11IPAD_BF1 /* CountrySelectionView.swift in Sources */,
+				IPAD_BF12IPAD_BF12IPAD_BF1 /* EPGOverlayView.swift in Sources */,
+				IPAD_BF13IPAD_BF13IPAD_BF1 /* PlayerView.swift in Sources */,
+				IPAD_BF14IPAD_BF14IPAD_BF1 /* SettingsView.swift in Sources */,
+				9B022FA4B11E30A27C006BE3 /* SetupView.swift in Sources */,
+				IPAD_BF15IPAD_BF15IPAD_BF1 /* SVGImageView.swift in Sources */,
+				IPAD_BFPLAT01IPAD_BFPLAT0 /* PlatformImage.swift in Sources */,
+				IPAD_BF16IPAD_BF16IPAD_BF1 /* IPTVPlayerApp.swift in Sources */,
+				IPAD_BF17IPAD_BF17IPAD_BF1 /* PlayerLayerView.swift in Sources */,
+				IPAD_BF18IPAD_BF18IPAD_BF1 /* iPadRootView.swift in Sources */,
+				IPAD_BF19IPAD_BF19IPAD_BF1 /* ObjCExceptionCatcher.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MAC_SP01MAC_SP01MAC_SP01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MAC_BF01MAC_BF01MAC_BF01 /* Channel.swift in Sources */,
+				CPREV_BF03CPREV_BF03CPREV_BF0 /* ChannelPreview.swift in Sources */,
+				MAC_BF02MAC_BF02MAC_BF02 /* EPGEvent.swift in Sources */,
+				MAC_BF03MAC_BF03MAC_BF03 /* EPGService.swift in Sources */,
+				MAC_BF04MAC_BF04MAC_BF04 /* ImageCache.swift in Sources */,
+				MAC_BF05MAC_BF05MAC_BF05 /* M3UParser.swift in Sources */,
+				MAC_BF06MAC_BF06MAC_BF06 /* PlaylistService.swift in Sources */,
+				MAC_BF07MAC_BF07MAC_BF07 /* SettingsStore.swift in Sources */,
+				MAC_BF08MAC_BF08MAC_BF08 /* ZenithDiscoveryService.swift in Sources */,
+				MAC_BF09MAC_BF09MAC_BF09 /* ChannelGridView.swift in Sources */,
+				MAC_BF10MAC_BF10MAC_BF10 /* ChannelTile.swift in Sources */,
+				MAC_BF11MAC_BF11MAC_BF11 /* CountrySelectionView.swift in Sources */,
+				MAC_BF12MAC_BF12MAC_BF12 /* EPGOverlayView.swift in Sources */,
+				MAC_BF13MAC_BF13MAC_BF13 /* PlayerView.swift in Sources */,
+				MAC_BF14MAC_BF14MAC_BF14 /* SettingsView.swift in Sources */,
+				8BA29B76E7DD075CA7DD2C4A /* SetupView.swift in Sources */,
+				MAC_BF15MAC_BF15MAC_BF15 /* SVGImageView.swift in Sources */,
+				MAC_BF16MAC_BF16MAC_BF16 /* IPTVPlayerApp.swift in Sources */,
+				MAC_BF17MAC_BF17MAC_BF17 /* PlayerLayerView.swift in Sources */,
+				MAC_BF18MAC_BF18MAC_BF18 /* iPadRootView.swift in Sources */,
+				MAC_BF19MAC_BF19MAC_BF19 /* PlatformImage.swift in Sources */,
+				MAC_BF20MAC_BF20MAC_BF20 /* ObjCExceptionCatcher.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		787C36BA60A0DCC0B7480957 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD8FC6EA2D50082894F50CB1 /* IPTVPlayer */;
+			targetProxy = 8CF29844C5C55EA505D6A0ED /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0B6C06EF57DED5C28042B5CE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0SIGN0XCCONFIG0000000001 /* Signing.xcconfig */;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ZenithMedia/rust/target/$(ZM_RUST_TRIPLE)/$(ZM_RUST_PROFILE)",
+				);
+				ZM_RUST_PROFILE = debug;
+				"ZM_RUST_TRIPLE[sdk=appletvos*]" = "aarch64-apple-tvos";
+				"ZM_RUST_TRIPLE[sdk=appletvsimulator*]" = "aarch64-apple-tvos-sim";
+				"ZM_RUST_TRIPLE[sdk=iphoneos*]" = "aarch64-apple-ios";
+				"ZM_RUST_TRIPLE[sdk=iphonesimulator*]" = "aarch64-apple-ios-sim";
+				"ZM_RUST_TRIPLE[sdk=macosx*]" = "aarch64-apple-darwin";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
+			};
+			name = Debug;
+		};
+		22508DF90464C21D37FA67EA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					AVKit,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGN_ENTITLEMENTS = IPTVPlayer/IPTVPlayer.entitlements;
+				CURRENT_PROJECT_VERSION = 2026101804;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = "1.0";
+				INFOPLIST_FILE = IPTVPlayer/Info.plist;
+				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID)";
+				PRODUCT_NAME = "Zenith Player";
+				PRODUCT_MODULE_NAME = IPTVPlayer;
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZENITH_TVOS_PROFILE)";
+				SDKROOT = appletvos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Release;
+		};
+		6EA390147FA983CA07AC7B71 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).tvos.tests";
+				SDKROOT = appletvos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zenith Player.app/Zenith Player";
+			};
+			name = Debug;
+		};
+		765D39166C1E3F6F1D998844 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					AVKit,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGN_ENTITLEMENTS = IPTVPlayer/IPTVPlayer.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IPTVPlayer/Info.plist;
+				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).tvos";
+				PRODUCT_NAME = "Zenith Player";
+				PRODUCT_MODULE_NAME = IPTVPlayer;
+				SDKROOT = appletvos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Debug;
+		};
+		D643FBC44AB8C4C04FFA12D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).tvos.tests";
+				SDKROOT = appletvos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zenith Player.app/Zenith Player";
+			};
+			name = Release;
+		};
+		FE55C958AE60288DE728F3DB /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0SIGN0XCCONFIG0000000001 /* Signing.xcconfig */;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ZenithMedia/rust/target/$(ZM_RUST_TRIPLE)/$(ZM_RUST_PROFILE)",
+				);
+				ZM_RUST_PROFILE = release;
+				"ZM_RUST_TRIPLE[sdk=appletvos*]" = "aarch64-apple-tvos";
+				"ZM_RUST_TRIPLE[sdk=appletvsimulator*]" = "aarch64-apple-tvos-sim";
+				"ZM_RUST_TRIPLE[sdk=iphoneos*]" = "aarch64-apple-ios";
+				"ZM_RUST_TRIPLE[sdk=iphonesimulator*]" = "aarch64-apple-ios-sim";
+				"ZM_RUST_TRIPLE[sdk=macosx*]" = "aarch64-apple-darwin";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
+			};
+			name = Release;
+		};
+		IPAD_CF01IPAD_CF01IPAD_CF0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "IPTVPlayer/ZenithTV-iPad.entitlements";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IPTVPlayer/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).ipad";
+				PRODUCT_NAME = "Zenith Player";
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		IPAD_CF02IPAD_CF02IPAD_CF0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "IPTVPlayer/ZenithTV-iPad.entitlements";
+				CURRENT_PROJECT_VERSION = 2026101804;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IPTVPlayer/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = "1.0";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID)";
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZENITH_IPAD_PROFILE)";
+				PRODUCT_NAME = "Zenith Player";
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+		MAC_CF01MAC_CF01MAC_CF01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "IPTVPlayer/ZenithTV-Mac.entitlements";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "IPTVPlayer/Info-Mac.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).mac";
+				PRODUCT_NAME = "Zenith Player";
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		MAC_CF02MAC_CF02MAC_CF02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "IPTVPlayer/ZenithTV-Mac.entitlements";
+				CURRENT_PROJECT_VERSION = 2026071801;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "IPTVPlayer/Info-Mac.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = "1.0";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).mac";
+				PRODUCT_NAME = "Zenith Player";
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZENITH_MAC_PROFILE)";
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9388010F10DBBACBF01CDDF4 /* Build configuration list for PBXNativeTarget "IPTVPlayerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6EA390147FA983CA07AC7B71 /* Debug */,
+				D643FBC44AB8C4C04FFA12D3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B27AD3616245E203E39AA85A /* Build configuration list for PBXNativeTarget "IPTVPlayer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				765D39166C1E3F6F1D998844 /* Debug */,
+				22508DF90464C21D37FA67EA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BA5CEF4ADB12121F6242BE1D /* Build configuration list for PBXProject "IPTVPlayer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B6C06EF57DED5C28042B5CE /* Debug */,
+				FE55C958AE60288DE728F3DB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		IPAD_CL01IPAD_CL01IPAD_CL0 /* Build configuration list for PBXNativeTarget "ZenithTV-iPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				IPAD_CF01IPAD_CF01IPAD_CF0 /* Debug */,
+				IPAD_CF02IPAD_CF02IPAD_CF0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		MAC_CL01MAC_CL01MAC_CL01 /* Build configuration list for PBXNativeTarget "ZenithTV-Mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				MAC_CF01MAC_CF01MAC_CF01 /* Debug */,
+				MAC_CF02MAC_CF02MAC_CF02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ZenithMedia;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SVGKit/SVGKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		647E9D55930FCE870B7B9264 /* SVGKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */;
+			productName = SVGKit;
+		};
+		ZMVBBB001ZMVBBB001ZMVBBB0 /* ZenithMedia */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */;
+			productName = ZenithMedia;
+		};
+		IPAD_PD01IPAD_PD01IPAD_PD0 /* SVGKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */;
+			productName = SVGKit;
+		};
+		IPAD_PD02IPAD_PD02IPAD_PD0 /* ZenithMedia */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */;
+			productName = ZenithMedia;
+		};
+		MAC_PD01MAC_PD01MAC_PD01 /* SVGKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */;
+			productName = SVGKit;
+		};
+		MAC_PD02MAC_PD02MAC_PD02 /* ZenithMedia */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */;
+			productName = ZenithMedia;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = BB91D5AA0079060AA1D39217 /* Project object */;
+}
