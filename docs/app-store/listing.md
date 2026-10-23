@@ -47,14 +47,14 @@ ITSAppUsesNonExemptEncryption = NO (HTTPS through system frameworks only).
 
 > Zenith Player is a player for the user's own TV server and ships no content.
 > To review it, enter this playlist address on the first screen:
-> `<DEMO PLAYLIST URL>`
-> It serves test channels (MPEG-TS) that the reviewer can browse and play.
+> `https://fishloa.github.io/zenith-player-demo/playlist.m3u`
+> It serves four test channels (MPEG-TS): excerpts of the Blender open movies
+> (CC BY 3.0) and a test pattern.
 > On Apple TV, focusing a channel tile plays a live preview; Select opens it
 > full screen; Menu returns to the grid.
 
-Needs: a demo playlist that App Review can reach from the internet, with
-streams we have the rights to (for example test patterns or Creative Commons
-films encoded as MPEG-TS).
+Demo channels: github.com/fishloa/zenith-player-demo (GitHub Pages), built by
+scripts/make-demo-channels.sh.
 
 ## Screenshots needed
 

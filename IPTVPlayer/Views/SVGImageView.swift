@@ -40,7 +40,7 @@ struct RemoteImageView: View {
         isLoading = true
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await AuthorizedFetcher.shared.data(from: url)
             let contentType = (response as? HTTPURLResponse)?
                 .value(forHTTPHeaderField: "Content-Type") ?? ""
             let isSVG = contentType.contains("svg") || url.pathExtension.lowercased() == "svg"

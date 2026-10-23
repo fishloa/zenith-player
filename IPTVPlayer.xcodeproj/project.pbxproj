@@ -28,11 +28,23 @@
 		952501DFA0F746DF01C6A598 /* EPGOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */; };
 		962904A0AA81A751D438F9BC /* M3UParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2DBFC946E11D1193741231 /* M3UParserTests.swift */; };
 		B2B9D2BEB8E16B868A76DABC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E675089B40A5779F2175D002 /* SettingsView.swift */; };
+		D9766CBCC3B13B1F905EA218 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC3DABC61D325C7C47EC25E /* SignInView.swift */; };
 		4E9BB0CCF2BB77EE728F926B /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C3A42E37BE0153F57094FC /* SetupView.swift */; };
 		B3C2436BCD2B5239443A26B4 /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996DC6ABD918D64CD3AD0246 /* CountrySelectionView.swift */; };
 		B585DB8B5E353DE97A8727AF /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5095C43F640060E1A354A701 /* SettingsStoreTests.swift */; };
+		E03FA837ED2A08B444E73470 /* DeviceGrantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A6A3AB9F427E5759A3DE2F /* DeviceGrantTests.swift */; };
+		9390555F995093BD050CA232 /* SignInTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E69428F8C66D104E97E731 /* SignInTests.swift */; };
+		F2809830ACA0991053120C06 /* AuthorizedFetcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE37A7448A0094E2D6905E53 /* AuthorizedFetcherTests.swift */; };
+		FC341CDB21A22C53AE6A9F0F /* TestHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB58798D4DE9D04D3B573D8 /* TestHTTPServer.swift */; };
+		C20B0AA6EBAAC6AB33FB4E06 /* SecretStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78DA060050B33E36E2FCA6AB /* SecretStoreTests.swift */; };
+		8D607F227CDDAB83DF0E3AB6 /* InMemorySecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBDEE57DF965AB3ACB71CAA /* InMemorySecretStore.swift */; };
+		552677946F41FE604BBB8893 /* AuthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F54ED4D786C816BBFCEFA01 /* AuthTests.swift */; };
 		364F418EB24AC3617015245B /* PlaylistServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1347546EDC373037EFC35EEA /* PlaylistServiceTests.swift */; };
 		BABF735A7C6F5693D24ABBD3 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4254372B7A6B0C6B416097 /* SettingsStore.swift */; };
+		07D4A55596C2821C99876EC5 /* DeviceGrant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F406051A8429FE8C6698DC /* DeviceGrant.swift */; };
+		109B1D84999E32A32AFC5174 /* AuthorizedFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F802383CCFF19D90460523 /* AuthorizedFetcher.swift */; };
+		BA6D91073CFFF777129C4D63 /* SecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B796922E9951A3D91AC771 /* SecretStore.swift */; };
+		1E47475906BE7769F77F3124 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750CE7B49E643D6B5271416B /* Auth.swift */; };
 		BF1D2EF4BD1C8313F1935C1D /* ZenithDiscoveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */; };
 		2896EC0B729A3056F0177AA4 /* ImageCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CD9218F001821DF3A85C12 /* ImageCacheTests.swift */; };
 		DA796AF72DB72189792B2FFF /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = 647E9D55930FCE870B7B9264 /* SVGKit */; };
@@ -54,6 +66,10 @@
 		IPAD_BF05IPAD_BF05IPAD_BF0 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0F77C13C190A5C46104348 /* M3UParser.swift */; };
 		IPAD_BF06IPAD_BF06IPAD_BF0 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */; };
 		IPAD_BF07IPAD_BF07IPAD_BF0 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4254372B7A6B0C6B416097 /* SettingsStore.swift */; };
+		FE5214D3E088288AF8E2DEDB /* DeviceGrant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F406051A8429FE8C6698DC /* DeviceGrant.swift */; };
+		E9DB0CB4E07092B36FF1A9EB /* AuthorizedFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F802383CCFF19D90460523 /* AuthorizedFetcher.swift */; };
+		7F6E0CB3FC4182622E6FD2A5 /* SecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B796922E9951A3D91AC771 /* SecretStore.swift */; };
+		E2C27456D6F58C12DE454BD5 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750CE7B49E643D6B5271416B /* Auth.swift */; };
 		IPAD_BF08IPAD_BF08IPAD_BF0 /* ZenithDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */; };
 		IPAD_BF09IPAD_BF09IPAD_BF0 /* ChannelGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */; };
 		IPAD_BF10IPAD_BF10IPAD_BF1 /* ChannelTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C4604BACC3BAAB10F229FC /* ChannelTile.swift */; };
@@ -61,6 +77,7 @@
 		IPAD_BF12IPAD_BF12IPAD_BF1 /* EPGOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */; };
 		IPAD_BF13IPAD_BF13IPAD_BF1 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A28781F9DC52B039328895 /* PlayerView.swift */; };
 		IPAD_BF14IPAD_BF14IPAD_BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E675089B40A5779F2175D002 /* SettingsView.swift */; };
+		98A805134B807DCD06397863 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC3DABC61D325C7C47EC25E /* SignInView.swift */; };
 		9B022FA4B11E30A27C006BE3 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C3A42E37BE0153F57094FC /* SetupView.swift */; };
 		IPAD_BF15IPAD_BF15IPAD_BF1 /* SVGImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */; };
 		IPAD_BFPLAT01IPAD_BFPLAT0 /* PlatformImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */; };
@@ -78,6 +95,10 @@
 		MAC_BF05MAC_BF05MAC_BF05 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0F77C13C190A5C46104348 /* M3UParser.swift */; };
 		MAC_BF06MAC_BF06MAC_BF06 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */; };
 		MAC_BF07MAC_BF07MAC_BF07 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4254372B7A6B0C6B416097 /* SettingsStore.swift */; };
+		29E221B763B92700CC7A1052 /* DeviceGrant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F406051A8429FE8C6698DC /* DeviceGrant.swift */; };
+		30A27A97CBCC7C70235E35E6 /* AuthorizedFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F802383CCFF19D90460523 /* AuthorizedFetcher.swift */; };
+		77C8015A40B65A1767EFA5CD /* SecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B796922E9951A3D91AC771 /* SecretStore.swift */; };
+		7A525F7BEE1B5AF97E739191 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750CE7B49E643D6B5271416B /* Auth.swift */; };
 		MAC_BF08MAC_BF08MAC_BF08 /* ZenithDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */; };
 		MAC_BF09MAC_BF09MAC_BF09 /* ChannelGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199BEDBD1B8E86127F405DD1 /* ChannelGridView.swift */; };
 		MAC_BF10MAC_BF10MAC_BF10 /* ChannelTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C4604BACC3BAAB10F229FC /* ChannelTile.swift */; };
@@ -85,6 +106,7 @@
 		MAC_BF12MAC_BF12MAC_BF12 /* EPGOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */; };
 		MAC_BF13MAC_BF13MAC_BF13 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A28781F9DC52B039328895 /* PlayerView.swift */; };
 		MAC_BF14MAC_BF14MAC_BF14 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E675089B40A5779F2175D002 /* SettingsView.swift */; };
+		1CBAF4B2B026DB8C9C9B6B2F /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC3DABC61D325C7C47EC25E /* SignInView.swift */; };
 		8BA29B76E7DD075CA7DD2C4A /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C3A42E37BE0153F57094FC /* SetupView.swift */; };
 		MAC_BF15MAC_BF15MAC_BF15 /* SVGImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */; };
 		MAC_BF16MAC_BF16MAC_BF16 /* IPTVPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */; };
@@ -118,6 +140,13 @@
 		34C4604BACC3BAAB10F229FC /* ChannelTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelTile.swift; sourceTree = "<group>"; };
 		47CBDF3EDE418CE1A9D38E3A /* IPTVPlayer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IPTVPlayer.entitlements; sourceTree = "<group>"; };
 		5095C43F640060E1A354A701 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
+		66A6A3AB9F427E5759A3DE2F /* DeviceGrantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceGrantTests.swift; sourceTree = "<group>"; };
+		E3E69428F8C66D104E97E731 /* SignInTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInTests.swift; sourceTree = "<group>"; };
+		AE37A7448A0094E2D6905E53 /* AuthorizedFetcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizedFetcherTests.swift; sourceTree = "<group>"; };
+		1EB58798D4DE9D04D3B573D8 /* TestHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support/TestHTTPServer.swift; sourceTree = "<group>"; };
+		78DA060050B33E36E2FCA6AB /* SecretStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretStoreTests.swift; sourceTree = "<group>"; };
+		4CBDEE57DF965AB3ACB71CAA /* InMemorySecretStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support/InMemorySecretStore.swift; sourceTree = "<group>"; };
+		6F54ED4D786C816BBFCEFA01 /* AuthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthTests.swift; sourceTree = "<group>"; };
 		1347546EDC373037EFC35EEA /* PlaylistServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistServiceTests.swift; sourceTree = "<group>"; };
 		52A28781F9DC52B039328895 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		5B2DBFC946E11D1193741231 /* M3UParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UParserTests.swift; sourceTree = "<group>"; };
@@ -127,6 +156,10 @@
 		78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGImageView.swift; sourceTree = "<group>"; };
 		PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformImage.swift; sourceTree = "<group>"; };
 		7A4254372B7A6B0C6B416097 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		B5F406051A8429FE8C6698DC /* DeviceGrant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceGrant.swift; sourceTree = "<group>"; };
+		15F802383CCFF19D90460523 /* AuthorizedFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizedFetcher.swift; sourceTree = "<group>"; };
+		D8B796922E9951A3D91AC771 /* SecretStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretStore.swift; sourceTree = "<group>"; };
+		750CE7B49E643D6B5271416B /* Auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth.swift; sourceTree = "<group>"; };
 		808D81D527C6587AD99E82BD /* EPGService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPGService.swift; sourceTree = "<group>"; };
 		834885132F7EDE6C24F6E581 /* EPGOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPGOverlayView.swift; sourceTree = "<group>"; };
 		8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenithDiscoveryServiceTests.swift; sourceTree = "<group>"; };
@@ -144,6 +177,7 @@
 		DB7CCF45B5DA412002EE99B4 /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
 		DF0F77C13C190A5C46104348 /* M3UParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UParser.swift; sourceTree = "<group>"; };
 		E675089B40A5779F2175D002 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5EC3DABC61D325C7C47EC25E /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		73C3A42E37BE0153F57094FC /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
 		FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVPlayerApp.swift; sourceTree = "<group>"; };
@@ -212,6 +246,13 @@
 				5B2DBFC946E11D1193741231 /* M3UParserTests.swift */,
 				A006140077D7351DBDB55879 /* PlaylistIntegrationTests.swift */,
 				5095C43F640060E1A354A701 /* SettingsStoreTests.swift */,
+				66A6A3AB9F427E5759A3DE2F /* DeviceGrantTests.swift */,
+				E3E69428F8C66D104E97E731 /* SignInTests.swift */,
+				AE37A7448A0094E2D6905E53 /* AuthorizedFetcherTests.swift */,
+				1EB58798D4DE9D04D3B573D8 /* TestHTTPServer.swift */,
+				78DA060050B33E36E2FCA6AB /* SecretStoreTests.swift */,
+				4CBDEE57DF965AB3ACB71CAA /* InMemorySecretStore.swift */,
+				6F54ED4D786C816BBFCEFA01 /* AuthTests.swift */,
 				1347546EDC373037EFC35EEA /* PlaylistServiceTests.swift */,
 				8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */,
 			);
@@ -269,6 +310,7 @@
 				52A28781F9DC52B039328895 /* PlayerView.swift */,
 				ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */,
 				E675089B40A5779F2175D002 /* SettingsView.swift */,
+				5EC3DABC61D325C7C47EC25E /* SignInView.swift */,
 				73C3A42E37BE0153F57094FC /* SetupView.swift */,
 				78954C3C5EC14EEAFE0727F2 /* SVGImageView.swift */,
 				PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */,
@@ -286,6 +328,10 @@
 				DF0F77C13C190A5C46104348 /* M3UParser.swift */,
 				ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */,
 				7A4254372B7A6B0C6B416097 /* SettingsStore.swift */,
+				B5F406051A8429FE8C6698DC /* DeviceGrant.swift */,
+				15F802383CCFF19D90460523 /* AuthorizedFetcher.swift */,
+				D8B796922E9951A3D91AC771 /* SecretStore.swift */,
+				750CE7B49E643D6B5271416B /* Auth.swift */,
 				9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */,
 				OBJC001OBJC001OBJC001OBJC /* ObjCExceptionCatcher.h */,
 				OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */,
@@ -540,7 +586,12 @@
 				555543EE0639C95627E6D5A1 /* SVGImageView.swift in Sources */,
 				PLATIMG_BF01PLATIMG_BF01 /* PlatformImage.swift in Sources */,
 				BABF735A7C6F5693D24ABBD3 /* SettingsStore.swift in Sources */,
+				07D4A55596C2821C99876EC5 /* DeviceGrant.swift in Sources */,
+				109B1D84999E32A32AFC5174 /* AuthorizedFetcher.swift in Sources */,
+				BA6D91073CFFF777129C4D63 /* SecretStore.swift in Sources */,
+				1E47475906BE7769F77F3124 /* Auth.swift in Sources */,
 				B2B9D2BEB8E16B868A76DABC /* SettingsView.swift in Sources */,
+				D9766CBCC3B13B1F905EA218 /* SignInView.swift in Sources */,
 				4E9BB0CCF2BB77EE728F926B /* SetupView.swift in Sources */,
 				6A3A3547E06C8A9634D06C60 /* ZenithDiscoveryService.swift in Sources */,
 				OBJC004OBJC004OBJC004OBJC /* ObjCExceptionCatcher.m in Sources */,
@@ -558,6 +609,13 @@
 				962904A0AA81A751D438F9BC /* M3UParserTests.swift in Sources */,
 				71A7B8DE02198C9FECBCB924 /* PlaylistIntegrationTests.swift in Sources */,
 				B585DB8B5E353DE97A8727AF /* SettingsStoreTests.swift in Sources */,
+				E03FA837ED2A08B444E73470 /* DeviceGrantTests.swift in Sources */,
+				9390555F995093BD050CA232 /* SignInTests.swift in Sources */,
+				F2809830ACA0991053120C06 /* AuthorizedFetcherTests.swift in Sources */,
+				FC341CDB21A22C53AE6A9F0F /* TestHTTPServer.swift in Sources */,
+				C20B0AA6EBAAC6AB33FB4E06 /* SecretStoreTests.swift in Sources */,
+				8D607F227CDDAB83DF0E3AB6 /* InMemorySecretStore.swift in Sources */,
+				552677946F41FE604BBB8893 /* AuthTests.swift in Sources */,
 				364F418EB24AC3617015245B /* PlaylistServiceTests.swift in Sources */,
 				BF1D2EF4BD1C8313F1935C1D /* ZenithDiscoveryServiceTests.swift in Sources */,
 			);
@@ -575,6 +633,10 @@
 				IPAD_BF05IPAD_BF05IPAD_BF0 /* M3UParser.swift in Sources */,
 				IPAD_BF06IPAD_BF06IPAD_BF0 /* PlaylistService.swift in Sources */,
 				IPAD_BF07IPAD_BF07IPAD_BF0 /* SettingsStore.swift in Sources */,
+				FE5214D3E088288AF8E2DEDB /* DeviceGrant.swift in Sources */,
+				E9DB0CB4E07092B36FF1A9EB /* AuthorizedFetcher.swift in Sources */,
+				7F6E0CB3FC4182622E6FD2A5 /* SecretStore.swift in Sources */,
+				E2C27456D6F58C12DE454BD5 /* Auth.swift in Sources */,
 				IPAD_BF08IPAD_BF08IPAD_BF0 /* ZenithDiscoveryService.swift in Sources */,
 				IPAD_BF09IPAD_BF09IPAD_BF0 /* ChannelGridView.swift in Sources */,
 				IPAD_BF10IPAD_BF10IPAD_BF1 /* ChannelTile.swift in Sources */,
@@ -582,6 +644,7 @@
 				IPAD_BF12IPAD_BF12IPAD_BF1 /* EPGOverlayView.swift in Sources */,
 				IPAD_BF13IPAD_BF13IPAD_BF1 /* PlayerView.swift in Sources */,
 				IPAD_BF14IPAD_BF14IPAD_BF1 /* SettingsView.swift in Sources */,
+				98A805134B807DCD06397863 /* SignInView.swift in Sources */,
 				9B022FA4B11E30A27C006BE3 /* SetupView.swift in Sources */,
 				IPAD_BF15IPAD_BF15IPAD_BF1 /* SVGImageView.swift in Sources */,
 				IPAD_BFPLAT01IPAD_BFPLAT0 /* PlatformImage.swift in Sources */,
@@ -604,6 +667,10 @@
 				MAC_BF05MAC_BF05MAC_BF05 /* M3UParser.swift in Sources */,
 				MAC_BF06MAC_BF06MAC_BF06 /* PlaylistService.swift in Sources */,
 				MAC_BF07MAC_BF07MAC_BF07 /* SettingsStore.swift in Sources */,
+				29E221B763B92700CC7A1052 /* DeviceGrant.swift in Sources */,
+				30A27A97CBCC7C70235E35E6 /* AuthorizedFetcher.swift in Sources */,
+				77C8015A40B65A1767EFA5CD /* SecretStore.swift in Sources */,
+				7A525F7BEE1B5AF97E739191 /* Auth.swift in Sources */,
 				MAC_BF08MAC_BF08MAC_BF08 /* ZenithDiscoveryService.swift in Sources */,
 				MAC_BF09MAC_BF09MAC_BF09 /* ChannelGridView.swift in Sources */,
 				MAC_BF10MAC_BF10MAC_BF10 /* ChannelTile.swift in Sources */,
@@ -611,6 +678,7 @@
 				MAC_BF12MAC_BF12MAC_BF12 /* EPGOverlayView.swift in Sources */,
 				MAC_BF13MAC_BF13MAC_BF13 /* PlayerView.swift in Sources */,
 				MAC_BF14MAC_BF14MAC_BF14 /* SettingsView.swift in Sources */,
+				1CBAF4B2B026DB8C9C9B6B2F /* SignInView.swift in Sources */,
 				8BA29B76E7DD075CA7DD2C4A /* SetupView.swift in Sources */,
 				MAC_BF15MAC_BF15MAC_BF15 /* SVGImageView.swift in Sources */,
 				MAC_BF16MAC_BF16MAC_BF16 /* IPTVPlayerApp.swift in Sources */,

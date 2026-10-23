@@ -36,13 +36,13 @@ final class ZenithDiscoveryServiceTests: XCTestCase {
     }
 
     func testPendingDiscoveryIsNilInitially() {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         let svc = ZenithDiscoveryService(settingsStore: store)
         XCTAssertNil(svc.pendingDiscovery)
     }
 
     func testAcceptAppliesDiscoveryToSettingsStore() {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         let svc = ZenithDiscoveryService(settingsStore: store)
         svc.simulatePending(DiscoveredServer(
             name: "TestServer",
@@ -54,7 +54,7 @@ final class ZenithDiscoveryServiceTests: XCTestCase {
     }
 
     func testDismissAddsToDismissedSetAndClears() {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         let svc = ZenithDiscoveryService(settingsStore: store)
         svc.simulatePending(DiscoveredServer(
             name: "TestServer",
@@ -67,7 +67,7 @@ final class ZenithDiscoveryServiceTests: XCTestCase {
     }
 
     func testDismissedURLsPersistedAcrossInstances() {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         let svc1 = ZenithDiscoveryService(settingsStore: store)
         svc1.simulatePending(DiscoveredServer(
             name: "TestServer",
@@ -80,14 +80,14 @@ final class ZenithDiscoveryServiceTests: XCTestCase {
     }
 
     func testAcceptIsNoOpWhenNoPending() {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         let svc = ZenithDiscoveryService(settingsStore: store)
         svc.accept()
         XCTAssertFalse(store.isConfigured)
     }
 
     func testDismissIsNoOpWhenNoPending() {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         let svc = ZenithDiscoveryService(settingsStore: store)
         svc.dismiss()
         let saved = UserDefaults.standard.stringArray(forKey: Self.dismissedKey) ?? []

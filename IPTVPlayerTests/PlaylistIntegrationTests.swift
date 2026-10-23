@@ -59,7 +59,7 @@ final class PlaylistIntegrationTests: XCTestCase {
     }
 
     func testPlaylistServiceLoadsLiveChannels() async throws {
-        let store = SettingsStore()
+        let store = SettingsStore.testing()
         store.playlistURL = playlistURL.absoluteString
         let service = PlaylistService(settingsStore: store)
         await service.loadPlaylist()

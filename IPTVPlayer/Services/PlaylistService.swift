@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+struct SignInRequest: Equatable {
+    let origin: Origin
+    let challenge: AuthChallenge?
+    let rejected: Bool
+}
+
 @Observable
 final class PlaylistService {
 
@@ -11,15 +17,19 @@ final class PlaylistService {
     private(set) var guideURL: URL?
     /// No playlist configured yet: the app shows setup instead of channels.
     private(set) var needsSetup = false
+    private(set) var signIn: SignInRequest?
 
     private let settingsStore: SettingsStore
+    private let fetcher: AuthorizedFetcher
 
-    init(settingsStore: SettingsStore) {
+    init(settingsStore: SettingsStore, fetcher: AuthorizedFetcher = .shared) {
         self.settingsStore = settingsStore
+        self.fetcher = fetcher
     }
 
     func loadPlaylist() async {
         errorMessage = nil
+        signIn = nil
         needsSetup = !settingsStore.isConfigured
         guard !needsSetup else {
             channels = []
@@ -35,6 +45,14 @@ final class PlaylistService {
             if channels.isEmpty {
                 errorMessage = "No channels found in playlist."
             }
+        } catch FetchError.unauthorized(let challenge, let origin, let rejected) {
+            signIn = SignInRequest(origin: origin, challenge: challenge, rejected: rejected)
+            channels = []
+            guideURL = nil
+        } catch FetchError.forbidden {
+            errorMessage = "This server does not allow access."
+            channels = []
+            guideURL = nil
         } catch {
             errorMessage = error.localizedDescription
             channels = []
@@ -48,7 +66,7 @@ final class PlaylistService {
         guard let url = URL(string: settingsStore.playlistURL) else {
             throw URLError(.badURL)
         }
-        let (data, _) = try await URLSession.shared.data(from: Self.requestURL(for: url))
+        let (data, _) = try await fetcher.data(from: Self.requestURL(for: url))
         guard let text = String(data: data, encoding: .utf8) else {
             throw URLError(.cannotDecodeContentData)
         }

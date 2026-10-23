@@ -3,41 +3,65 @@ import Observation
 
 @Observable
 final class SettingsStore {
-
     private static let playlistURLKey = "playlistURL"
-    private let cloudStore = NSUbiquitousKeyValueStore.default
+    private let secrets: SecretStore
+    let credentials: CredentialStore
 
     var playlistURL: String {
         didSet {
-            UserDefaults.standard.set(playlistURL, forKey: Self.playlistURLKey)
-            cloudStore.set(playlistURL, forKey: Self.playlistURLKey)
-            cloudStore.synchronize()
+            guard playlistURL != oldValue else { return }
+            let trimmed = playlistURL.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty {
+                _ = secrets.set(nil, for: Self.playlistURLKey)
+            } else {
+                _ = secrets.set(Data(playlistURL.utf8), for: Self.playlistURLKey)
+            }
         }
     }
 
-    init() {
-        let cloudPlaylist = NSUbiquitousKeyValueStore.default.string(forKey: Self.playlistURLKey)
-        let localPlaylist = UserDefaults.standard.string(forKey: Self.playlistURLKey)
-        self.playlistURL = cloudPlaylist ?? localPlaylist ?? ""
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(iCloudDidChange),
-            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: cloudStore
-        )
-    }
-
-    @objc private func iCloudDidChange(_ notification: Notification) {
-        guard let keys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] else { return }
-        if keys.contains(Self.playlistURLKey),
-           let newValue = cloudStore.string(forKey: Self.playlistURLKey) {
-            playlistURL = newValue
+    init(secrets: SecretStore = KeychainSecretStore(), arguments: [String] = ProcessInfo.processInfo.arguments) {
+        self.secrets = secrets
+        credentials = CredentialStore(secrets: secrets)
+        var url = secrets.data(for: Self.playlistURLKey).map { String(decoding: $0, as: UTF8.self) } ?? ""
+        if url.isEmpty, let legacy = Self.legacyPlaylistURL() {
+            if secrets.set(Data(legacy.utf8), for: Self.playlistURLKey) {
+                let readBack = secrets.data(for: Self.playlistURLKey).map { String(decoding: $0, as: UTF8.self) }
+                if readBack == legacy {
+                    Self.removeLegacyPlaylistURL()
+                }
+            }
+            url = legacy
         }
+        if let i = arguments.firstIndex(of: "-zenithPlaylist"), arguments.indices.contains(i + 1) {
+            url = arguments[i + 1]
+        }
+        playlistURL = url
     }
 
-    /// No server is built in: until a playlist is set (typed in, or found
-    /// on the network) the app shows setup. The guide URL is not a setting:
-    /// it comes from the playlist's url-tvg.
+    private static func legacyPlaylistURL() -> String? {
+        let kvs = NSUbiquitousKeyValueStore.default
+        let url = kvs.string(forKey: playlistURLKey) ?? UserDefaults.standard.string(forKey: playlistURLKey)
+        return url?.isEmpty == false ? url : nil
+    }
+
+    private static func removeLegacyPlaylistURL() {
+        let kvs = NSUbiquitousKeyValueStore.default
+        kvs.removeObject(forKey: playlistURLKey)
+        kvs.synchronize()
+        UserDefaults.standard.removeObject(forKey: playlistURLKey)
+    }
+
+    @discardableResult func setPlaylist(_ text: String) -> Bool {
+        let (url, credential) = Credential.split(text.trimmingCharacters(in: .whitespaces))
+        if let credential, let origin = URL(string: url).flatMap(Origin.init) {
+            credentials.set(credential, for: origin)
+        }
+        let changed = url != playlistURL
+        playlistURL = url
+        return changed
+    }
+
+    var playlistOrigin: Origin? { URL(string: playlistURL).flatMap(Origin.init) }
+
     var isConfigured: Bool { !playlistURL.trimmingCharacters(in: .whitespaces).isEmpty }
 }

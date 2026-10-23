@@ -149,6 +149,10 @@ struct iPadRootView: View {
     private func withPlaceholder<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         if playlistService.isLoading {
             ProgressView("Loading channels...")
+        } else if let request = playlistService.signIn {
+            SignInView(request: request, settingsStore: settingsStore) {
+                Task { await playlistService.loadPlaylist() }
+            }
         } else if playlistService.needsSetup {
             SetupView(settingsStore: settingsStore)
         } else if let error = playlistService.errorMessage, playlistService.channels.isEmpty {

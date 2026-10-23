@@ -174,11 +174,11 @@ struct PlayerView: View {
             // view opened, so nothing starts here unless it is idle (app just
             // came back) or the switch below changed the channel.
             if usesPreviewPlayer, player.phase != .loading {
-                print("[PlayerView] reuse running stream \(currentChannel.streamURL)")
+                print("[PlayerView] reuse running stream \(currentChannel.name)")
                 return
             }
             let url = currentChannel.streamURL
-            print("[PlayerView] play \(url)")
+            print("[PlayerView] play \(currentChannel.name)")
             player.play { HTTPByteSource(url: url) }
         }
         .onAppear {
@@ -206,6 +206,10 @@ struct PlayerView: View {
         }
         .onChange(of: player.stats.rebuffers) { _, _ in PlaybackLog.stall(currentChannel.id, player.stats) }
         .onChange(of: player.stats.restarts) { _, _ in PlaybackLog.stall(currentChannel.id, player.stats, kind: "restart") }
+        .task(id: currentChannel.id) {
+            try? await Task.sleep(for: .seconds(20))
+            if !Task.isCancelled { PlaybackLog.playing(currentChannel.id, player.stats) }
+        }
         .onChange(of: scenePhase) { _, newPhase in
             #if os(iOS) || os(tvOS)
             // Background stops playback; returning restarts at the live edge.
@@ -285,6 +289,16 @@ enum PlaybackLog {
             + "nodata=\(s.starvedNoData) withdata=\(s.starvedWithData) "
             + String(format: "max_gap=%.2fs", s.maxChunkGap)
             + " pause=[\(s.lastPauseInfo?.split(separator: "|").last.map(String.init) ?? "")]\n"
+        write(line)
+    }
+
+    static func playing(_ channel: String, _ s: PlayerStats) {
+        let first = s.firstFrameAfter.map { String(format: "%.2fs", $0) } ?? "none"
+        write("\(stamp.string(from: Date())) playing \(channel) first_frame=\(first) decoded=\(s.framesDecoded) "
+              + "rebuffers=\(s.rebuffers) restarts=\(s.restarts) hw=\(s.hardwareDecode.map { $0 ? "yes" : "no" } ?? "-")\n")
+    }
+
+    private static func write(_ line: String) {
         guard let data = line.data(using: .utf8) else { return }
         if let h = try? FileHandle(forWritingTo: url) {
             defer { try? h.close() }

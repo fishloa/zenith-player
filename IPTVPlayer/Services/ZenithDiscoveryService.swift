@@ -115,20 +115,20 @@ final class ZenithDiscoveryService {
         if !settingsStore.isConfigured {
             applyDiscovery(server)
             DispatchQueue.main.async { self.stop() }
-            print("[ZenithDiscovery] auto-applied: \(playlistURL)")
+            print("[ZenithDiscovery] auto-applied: \(server.name)")
             return true
         }
 
         // Case 4: differs from configured → prompt user
         pendingDiscovery = server
         DispatchQueue.main.async { self.stop() }
-        print("[ZenithDiscovery] pending user decision: \(playlistURL)")
+        print("[ZenithDiscovery] pending user decision: \(server.name)")
         return true
     }
 
     private func applyDiscovery(_ server: DiscoveredServer) {
         settingsStore.playlistURL = server.playlistURL
-        print("[ZenithDiscovery] applied: \(server.playlistURL)")
+        print("[ZenithDiscovery] applied: \(server.name)")
     }
 
     private func saveDismissed() {

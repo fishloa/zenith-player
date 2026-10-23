@@ -16,18 +16,21 @@ final class EPGService {
     /// When the last successful fetch completed.
     private(set) var lastFetchDate: Date?
 
+    private let fetcher: AuthorizedFetcher
+
     /// The URL currently being auto-refreshed.
     private var refreshURL: URL?
     private var refreshTask: Task<Void, Never>?
 
-    init() {}
+    init(fetcher: AuthorizedFetcher = .shared) { self.fetcher = fetcher }
 
     #if DEBUG
-    init(preloaded events: [EPGEvent]) {
+    init(preloaded events: [EPGEvent], fetcher: AuthorizedFetcher = .shared) {
         var grouped: [String: [EPGEvent]] = [:]
         for event in events { grouped[event.serviceSlug, default: []].append(event) }
         eventsBySlug = grouped
         lastFetchDate = .now
+        self.fetcher = fetcher
     }
     #endif
 
@@ -38,7 +41,7 @@ final class EPGService {
         guard refreshURL != url else { return }
         stopAutoRefresh()
         refreshURL = url
-        print("[EPG] auto-refresh started: \(url)")
+        print("[EPG] auto-refresh started: \(Origin(url).map(String.init(describing:)) ?? "-")")
 
         refreshTask = Task { [weak self] in
             // Initial fetch
@@ -79,7 +82,7 @@ final class EPGService {
         defer { isLoading = false }
 
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await fetcher.data(from: url)
             let events = try XMLTVParser.events(from: data)
             var grouped: [String: [EPGEvent]] = [:]
             for event in events { grouped[event.serviceSlug, default: []].append(event) }

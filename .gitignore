@@ -65,3 +65,6 @@ Config/Signing.local.xcconfig
 scripts/submit-external-testing.py
 scripts/upload-testflight.py
 __pycache__/
+testdata/demo-src/
+testdata/demo/
+testdata/demo-local/

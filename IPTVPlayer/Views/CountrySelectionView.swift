@@ -8,6 +8,13 @@ struct CountrySelectionView: View {
     var epgService: EPGService
 
     @State private var showSettings = false
+    @State private var launchChannel: Channel?
+    @State private var launchChannelShown = false
+
+    private static let launchChannelID: String? = {
+        let args = ProcessInfo.processInfo.arguments
+        return args.firstIndex(of: "-zenithPlayChannel").flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil }
+    }()
 
     private var groups: [String] {
         var seen = Set<String>()
@@ -27,6 +34,10 @@ struct CountrySelectionView: View {
             Group {
                 if playlistService.isLoading {
                     ProgressView("Loading channels...")
+                } else if let request = playlistService.signIn {
+                    SignInView(request: request, settingsStore: settingsStore) {
+                        Task { await playlistService.loadPlaylist() }
+                    }
                 } else if playlistService.needsSetup {
                     SetupView(settingsStore: settingsStore)
                 } else if let error = playlistService.errorMessage, playlistService.channels.isEmpty {
@@ -76,6 +87,16 @@ struct CountrySelectionView: View {
                     }
                 }
             }
+        }
+        .onChange(of: playlistService.channels.map(\.id)) { _, ids in
+            if !launchChannelShown, let id = Self.launchChannelID, ids.contains(id) {
+                launchChannelShown = true
+                launchChannel = playlistService.channels.first { $0.id == id }
+            }
+        }
+        .fullScreenCover(item: $launchChannel) { channel in
+            PlayerView(channel: channel, channels: playlistService.channels,
+                       epgURL: playlistService.guideURL, epgService: epgService)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(settingsStore: settingsStore) {

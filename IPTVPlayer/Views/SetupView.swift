@@ -32,7 +32,7 @@ struct SetupView: View {
                 .textFieldStyle(.roundedBorder)
                 #endif
             Button("Load Playlist") {
-                settingsStore.playlistURL = trimmed
+                settingsStore.setPlaylist(trimmed)
             }
             .disabled(!isValid)
         }

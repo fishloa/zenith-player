@@ -16,10 +16,17 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
 
                     Button("Load Playlist") {
-                        let url = urlText.trimmingCharacters(in: .whitespaces)
-                        // A changed URL reloads through the root view's onChange.
-                        if url == settingsStore.playlistURL { onSave() } else { settingsStore.playlistURL = url }
+                        if !settingsStore.setPlaylist(urlText) { onSave() }
                         dismiss()
+                    }
+                }
+                if let origin = settingsStore.playlistOrigin, settingsStore.credentials.credential(for: origin) != nil {
+                    Section {
+                        Button("Sign Out", role: .destructive) {
+                            settingsStore.credentials.set(nil, for: origin)
+                            onSave()
+                            dismiss()
+                        }
                     }
                 }
             }
