@@ -368,10 +368,10 @@ public final class PlayerController {
                 case .starting, .starved:
                     let since = waitStart ?? Date(); waitStart = since
                     let t = Date().timeIntervalSince(since)
-                    if case .reconnecting(let n)? = status {
-                        self.phase = .reconnecting(attempt: n)
-                    } else if reconnects > 0 {
-                        self.phase = .reconnecting(attempt: reconnects)
+                    let sessionAttempt: Int? = if case .reconnecting(let n)? = status { n } else { nil }
+                    if sessionAttempt != nil || reconnects > 0 {
+                        let shown: Int = if case .reconnecting(let m) = self.phase { m } else { 0 }
+                        self.phase = .reconnecting(attempt: max(shown, reconnects, sessionAttempt ?? 0))
                     } else if played {
                         self.phase = .buffering(t > self.policy.stallMessageAfter ? "Waiting for server… (\(Int(t))s)" : "Buffering…")
                     }

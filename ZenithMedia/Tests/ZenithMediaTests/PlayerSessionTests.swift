@@ -91,6 +91,24 @@ final class PlayerSessionTests: XCTestCase {
         c.stop()
     }
 
+    func testReconnectAttemptNeverGoesBack() async throws {
+        let s = try LoopbackHTTPServer { _ in TestResponse(status: 503) }
+        defer { s.stop() }
+        var p = fast
+        p.startTimeout = 1
+        let c = PlayerController(renderer: Renderer(audioOutput: false), policy: p, isInterlaced: { _ in false })
+        c.play(url: try await s.baseURL().appendingPathComponent("stream.ts"))
+        var attempts: [Int] = []
+        let end = Date().addingTimeInterval(8)
+        while Date() < end {
+            if case .reconnecting(let n) = c.phase, attempts.last != n { attempts.append(n) }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        c.stop()
+        XCTAssertGreaterThanOrEqual(attempts.count, 2, "\(attempts)")
+        XCTAssertEqual(attempts, attempts.sorted(), "\(attempts)")
+    }
+
     func testStreamAuthFailureIsReported() async throws {
         let s = try LoopbackHTTPServer { _ in TestResponse(status: 401, headers: ["WWW-Authenticate": #"Basic realm="tv""#]) }
         defer { s.stop() }

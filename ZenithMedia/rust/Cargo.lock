@@ -82,7 +82,7 @@ dependencies = [
 [[package]]
 name = "broadcast-auth"
 version = "0.5.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "base64 0.23.1",
  "form_urlencoded",
@@ -104,7 +104,7 @@ dependencies = [
 [[package]]
 name = "broadcast-client"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-auth",
  "broadcast-common",
@@ -128,7 +128,7 @@ dependencies = [
 [[package]]
 name = "broadcast-common"
 version = "10.0.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "chrono",
  "hex",
@@ -138,7 +138,7 @@ dependencies = [
 [[package]]
 name = "broadcast-hls"
 version = "0.4.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "jiff",
@@ -158,7 +158,7 @@ dependencies = [
 [[package]]
 name = "buffering-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -406,7 +406,7 @@ dependencies = [
 [[package]]
 name = "dvb-si"
 version = "12.0.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -639,7 +639,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hls-runtime"
 version = "0.9.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "broadcast-hls",
@@ -969,7 +969,7 @@ dependencies = [
 [[package]]
 name = "media-plane"
 version = "0.7.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -1001,7 +1001,7 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 [[package]]
 name = "mp4-emsg"
 version = "0.5.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1011,7 +1011,7 @@ dependencies = [
 [[package]]
 name = "mpeg-pes"
 version = "0.6.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1021,7 +1021,7 @@ dependencies = [
 [[package]]
 name = "mpeg-ps"
 version = "0.6.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "mpeg-pes",
@@ -1032,7 +1032,7 @@ dependencies = [
 [[package]]
 name = "mpeg-ts"
 version = "0.6.2"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -1277,7 +1277,7 @@ dependencies = [
 [[package]]
 name = "rtcp-packet"
 version = "0.6.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1287,7 +1287,7 @@ dependencies = [
 [[package]]
 name = "rtp-packet"
 version = "0.5.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1297,7 +1297,7 @@ dependencies = [
 [[package]]
 name = "rtsp-runtime"
 version = "0.8.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-auth",
  "http-auth",
@@ -1335,7 +1335,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scte35-splice"
 version = "4.0.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "base64 0.23.1",
  "broadcast-common",
@@ -1552,7 +1552,7 @@ dependencies = [
 [[package]]
 name = "timed-metadata"
 version = "0.7.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "broadcast-hls",
@@ -1612,7 +1612,7 @@ dependencies = [
 [[package]]
 name = "transmux"
 version = "0.27.7"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "aes",
  "base64 0.23.1",
@@ -1643,7 +1643,7 @@ dependencies = [
 [[package]]
 name = "tshttp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=38681bf5bc4c73232907819a026c1337f2d25859#38681bf5bc4c73232907819a026c1337f2d25859"
+source = "git+https://github.com/fishloa/rust-broadcast?rev=0d5bdc15675e0f90bcea076f32636d9afafb9e93#0d5bdc15675e0f90bcea076f32636d9afafb9e93"
 dependencies = [
  "broadcast-common",
  "serde",

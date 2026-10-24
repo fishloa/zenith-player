@@ -10,10 +10,10 @@ description = "Thin C ABI over transmux streaming TS demux and oxideav-mp2 for t
 crate-type = ["staticlib", "rlib"]
 
 [dependencies]
-transmux = { git = "https://github.com/fishloa/rust-broadcast", rev = "38681bf5bc4c73232907819a026c1337f2d25859" }
-broadcast-common = { git = "https://github.com/fishloa/rust-broadcast", rev = "38681bf5bc4c73232907819a026c1337f2d25859" }
-buffering-runtime = { git = "https://github.com/fishloa/rust-broadcast", rev = "38681bf5bc4c73232907819a026c1337f2d25859" }
-broadcast-client = { git = "https://github.com/fishloa/rust-broadcast", rev = "38681bf5bc4c73232907819a026c1337f2d25859" }
+transmux = { git = "https://github.com/fishloa/rust-broadcast", rev = "0d5bdc15675e0f90bcea076f32636d9afafb9e93" }
+broadcast-common = { git = "https://github.com/fishloa/rust-broadcast", rev = "0d5bdc15675e0f90bcea076f32636d9afafb9e93" }
+buffering-runtime = { git = "https://github.com/fishloa/rust-broadcast", rev = "0d5bdc15675e0f90bcea076f32636d9afafb9e93" }
+broadcast-client = { git = "https://github.com/fishloa/rust-broadcast", rev = "0d5bdc15675e0f90bcea076f32636d9afafb9e93" }
 oxideav-mp2 = "=0.0.10"
 
 [profile.release]
