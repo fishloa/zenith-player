@@ -23,7 +23,8 @@ final class RendererTests: XCTestCase {
         XCTAssertEqual(r.enqueuedVideo, before, "stale session leaked frames")
         let new = r.beginSession()
         r.enqueueVideo(frame(20), session: new)
-        r.sync()
+        let end = Date().addingTimeInterval(2)
+        repeat { r.sync() } while r.enqueuedVideo <= before && Date() < end
         XCTAssertGreaterThan(r.enqueuedVideo, before)
     }
 

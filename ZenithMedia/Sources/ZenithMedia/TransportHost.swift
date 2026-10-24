@@ -59,12 +59,6 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
         }
     }
 
-    func cancelAll() {
-        for t in tasks.values { t.cancel() }
-        tasks.removeAll()
-        reverse.removeAll()
-    }
-
     func invalidate() {
         for t in tasks.values { t.cancel() }
         tasks.removeAll()

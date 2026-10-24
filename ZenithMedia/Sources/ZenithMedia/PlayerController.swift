@@ -122,9 +122,9 @@ public struct PlayerStats: Sendable {
     /// at hand-off, and buffers handed over already past due.
     public var minAudioLeadSeconds: Double?
     public var audioLateBuffers = 0
-    /// Stalls where live-buffer named audio as the starving track.
+    /// Stalls where the session named audio as the starving track.
     public var starvedOnAudio = 0
-    /// live-buffer's view at the last pause (diagnostics).
+    /// the session's view at the last pause (diagnostics).
     public var lastPauseInfo: String?
     public var framesDecoded = 0
     /// Frames lost to decode failures (should stay 0).
@@ -198,7 +198,7 @@ public final class PlayerController {
         chosenAudioTrack = trackID
         currentPipe?.selectAudio(trackID)
     }
-    /// live-buffer stall memory, carried across connections and channels
+    /// the session stall memory, carried across connections and channels
     /// (session scope: it describes the network path, not one channel).
     private var stallMemory: (peak: UInt64, age: UInt64)?
     public let renderer: Renderer
@@ -251,7 +251,6 @@ public final class PlayerController {
         let gen = generation
         let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
                             isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
-                            isCurrent: { [weak self] in await MainActor.run { self?.generation == gen } },
                             stallMemory: stallMemory, chosenAudio: chosenAudioTrack)
         currentPipe = pipe
         guard let src = ClientSource(bytes: source, startBuffer: policy.startBuffer, stallMemory: stallMemory, onEvents: { [weak pipe] events in pipe?.deliver(events) }) else {
@@ -272,7 +271,6 @@ public final class PlayerController {
         let gen = generation
         let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
                             isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
-                            isCurrent: { [weak self] in await MainActor.run { self?.generation == gen } },
                             stallMemory: stallMemory, chosenAudio: chosenAudioTrack)
         currentPipe = pipe
         guard let src = ClientSource(url: url, startBuffer: policy.startBuffer, stallMemory: stallMemory, onEvents: { [weak pipe] events in pipe?.deliver(events) }) else {
@@ -335,8 +333,9 @@ public final class PlayerController {
                     case .forbidden:
                         self.phase = .forbidden
                         continue
-                    case .error(_, fatal: true):
+                    case .error(let name, fatal: true):
                         self.phase = .forbidden
+                        log.error("session error \(name)")
                         continue
                     default: break
                     }
@@ -365,6 +364,7 @@ public final class PlayerController {
                     self.phase = .failed
                     pipe.abort()
                     source.close()
+                    return
                 case .starting, .starved:
                     let since = waitStart ?? Date(); waitStart = since
                     let t = Date().timeIntervalSince(since)
@@ -415,7 +415,6 @@ final class Pipeline: @unchecked Sendable {
     private let topFieldFirst: ((TrackInfo) -> Bool)?
     private let factory: @Sendable (TrackInfo) throws -> VideoDecoding
     private let queue: DispatchQueue
-    private let isCurrent: @Sendable () async -> Bool
     private let session: Int
     private let born = Date()
     private var timer: DispatchSourceTimer?
@@ -485,7 +484,6 @@ final class Pipeline: @unchecked Sendable {
     private var pubFinite = false
     private var firstTrackAt: Date?
     private var _aborted = false
-    private var _onAbort: (() -> Void)?
     private var restartRequested = false
     private var lastChunkAt: Date?
 
@@ -494,13 +492,13 @@ final class Pipeline: @unchecked Sendable {
     init(renderer: Renderer, policy: PlayerPolicy, chooseAudio: @escaping ([TrackInfo]) -> TrackInfo?,
          isInterlaced: @escaping (TrackInfo) -> Bool, topFieldFirst: ((TrackInfo) -> Bool)?,
          makeDecoder: @escaping @Sendable (TrackInfo) throws -> VideoDecoding,
-         queue: DispatchQueue, isCurrent: @escaping @Sendable () async -> Bool,
+         queue: DispatchQueue,
          stallMemory: (peak: UInt64, age: UInt64)? = nil,
          chosenAudio: UInt32? = nil) {
         factory = makeDecoder
         self.chosenAudio = chosenAudio
         self.renderer = renderer; self.policy = policy; self.chooseAudio = chooseAudio
-        self.isInterlaced = isInterlaced; self.topFieldFirst = topFieldFirst; self.queue = queue; self.isCurrent = isCurrent
+        self.isInterlaced = isInterlaced; self.topFieldFirst = topFieldFirst; self.queue = queue
         session = renderer.beginSession()
         flushObserver = NotificationCenter.default.addObserver(
             forName: .AVSampleBufferAudioRendererWasFlushedAutomatically,
@@ -554,24 +552,10 @@ final class Pipeline: @unchecked Sendable {
         }
     }
 
-    var onAbort: (() -> Void)? {
-        get { lock.lock(); defer { lock.unlock() }; return _onAbort }
-        set {
-            lock.lock(); _onAbort = newValue; let already = _aborted; lock.unlock()
-            if already { newValue?() }      // abort() before the reader was wired up
-        }
-    }
-
     /// Stop producing at once (stop / channel switch / give up). Safe from any thread.
     func abort() {
-        lock.lock(); _aborted = true; let cb = _onAbort; lock.unlock()
-        cb?()
+        lock.lock(); _aborted = true; lock.unlock()
         queue.async { self.timer?.cancel(); self.video?.decoder.invalidate() }
-    }
-
-    /// Stall memory to seed the next connection's controller (session scope).
-    var stallMemory: (peak: UInt64, age: UInt64)? {
-        source?.stallMemory.map { (peak: $0.peakUs, age: $0.ageUs) }
     }
 
     func setSource(_ s: ClientSource?) { source = s }
@@ -635,16 +619,6 @@ final class Pipeline: @unchecked Sendable {
         guard ids != renderedTracks else { return }
         renderedTracks = ids
         source?.setRenderedTracks(ids)
-    }
-
-    func shutdown() async {
-        await withCheckedContinuation { cont in
-            queue.async {
-                self.timer?.cancel()
-                self.video?.decoder.invalidate()
-                cont.resume()
-            }
-        }
     }
 
     // MARK: queue side
@@ -1030,7 +1004,6 @@ final class Pipeline: @unchecked Sendable {
         guard !aborted, let clock = clockTime() else { return }
         // 2. Audio up to audioAhead past the clock.
         if started { feedAudio(upTo: clock + CMTime(seconds: policy.audioAhead, preferredTimescale: 90000)) }
-        // 3. Buffer decisions now arrive via deliver; tell the session our position.
         source?.setPlaybackPosition(started && !paused ? ticks27(clock) : nil)
         if !started { maybeStart() }
     }
@@ -1095,7 +1068,6 @@ final class Pipeline: @unchecked Sendable {
     }
 
     private func maybeStart() {
-        // live-buffer decides when the buffer (min over video and audio) is deep enough.
         guard !aborted, !started, startAllowed, startPTS != nil, let first = bufferedVideo.first else { return }
         for f in bufferedVideo { renderer.enqueueVideo(f, session: session) }
         var firstAudio: CMTime?
