@@ -628,16 +628,10 @@ final class Pipeline: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }; return pubFinite
     }
 
-    /// The session renders the first video and first audio track by default
-    /// (and video only on a channel without audio). The player declares its
-    /// own set only when its audio choice differs, as the session would
-    /// otherwise wait for a track whose samples have already gone by.
     private var renderedTracks: [UInt32]?
     private func updateRenderedTracks() {
-        guard let v = video?.info.trackID, let a = audio?.info.trackID else { return }
-        let firstAudio = tracks.values.filter { [.aac, .ac3, .eac3, .mpegAudio].contains($0.codec) }.map(\.trackID).min()
-        let ids = [v, a]
-        if renderedTracks == nil, a == firstAudio { return }
+        guard let v = video?.info.trackID else { return }
+        let ids = [v] + (audio.map { [$0.info.trackID] } ?? [])
         guard ids != renderedTracks else { return }
         renderedTracks = ids
         source?.setRenderedTracks(ids)
