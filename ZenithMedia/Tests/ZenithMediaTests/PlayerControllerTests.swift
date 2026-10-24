@@ -463,18 +463,6 @@ final class PlayerControllerTests: XCTestCase {
         c.stop()
     }
 
-    /// Real capture (stimmungsgarten, 2026-10-18): programme (SAR 16:11, 25 fps)
-    /// cuts to the broadcaster's still slate (SAR 1:1, one I-picture per 2.3 s)
-    /// on a new timeline 25530 s later. Playback must carry on into the slate.
-    func testTimelineJumpRule() {
-        XCTAssertFalse(Pipeline.isNewTimeline(ptsStep: 0.04, elapsed: 0.04))
-        XCTAssertFalse(Pipeline.isNewTimeline(ptsStep: 2.29, elapsed: 2.29), "still slate cadence")
-        XCTAssertFalse(Pipeline.isNewTimeline(ptsStep: 0.04, elapsed: 4), "delivery gap")
-        XCTAssertFalse(Pipeline.isNewTimeline(ptsStep: 3, elapsed: 0.01), "catch-up burst after a gap")
-        XCTAssertTrue(Pipeline.isNewTimeline(ptsStep: 25530, elapsed: 0.1), "source switch")
-        XCTAssertTrue(Pipeline.isNewTimeline(ptsStep: -5, elapsed: 0.1), "backward")
-    }
-
     /// The same channel 50 minutes later: slate back to the interlaced programme
     /// (SAR 1:1 -> 16:11, progressive -> MBAFF).
     func testSwitchFromStillSlateBackToProgrammePlays() async throws {

@@ -1,4 +1,5 @@
 import Foundation
+import ZenithMedia
 
 enum FetchError: Error, Equatable {
     case unauthorized(AuthChallenge?, Origin, rejected: Bool)
@@ -8,6 +9,15 @@ enum FetchError: Error, Equatable {
 
 final class AuthorizedFetcher {
     static let shared = AuthorizedFetcher(credentials: CredentialStore(secrets: KeychainSecretStore()))
+
+    static func streamCredential(for url: URL) -> StreamCredential? {
+        guard let origin = Origin(url) else { return nil }
+        guard let cred = shared.credentials.credential(for: origin) else { return nil }
+        switch cred {
+        case .password(let user, let password): return .password(user: user, password: password)
+        case .bearer(let token): return .bearer(token)
+        }
+    }
 
     private let credentials: CredentialStore
     private let session: URLSession

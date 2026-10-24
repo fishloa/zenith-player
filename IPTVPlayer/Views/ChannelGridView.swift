@@ -291,7 +291,7 @@ private struct PreviewVideo: View {
                 case .loading, .reconnecting:
                     ProgressView()
                         .scaleEffect(1.5)
-                case .failed, .playing, .buffering:
+                case .failed, .forbidden, .needsCredentials, .playing, .buffering:
                     EmptyView()
                 }
             }

@@ -101,51 +101,57 @@ public final class TsDemuxer {
     }
 
     public func nextEvent() -> DemuxEvent? {
-        var ev = zm_event()
-        guard zm_demux_poll(handle, &ev) else { return nil }
-        func bytes(_ p: UnsafePointer<UInt8>?, _ n: Int) -> Data {
-            guard let p, n > 0 else { return Data() }
-            return Data(bytes: p, count: n)
+        while true {
+            var ev = zm_event()
+            guard zm_demux_poll(handle, &ev) else { return nil }
+            if let e = demuxEvent(from: ev) { return e }
         }
-        func geometry() -> (PixelAspect?, VideoColour?) {
-            let par = ev.pixel_aspect_h > 0 && ev.pixel_aspect_v > 0
-                ? PixelAspect(Int(ev.pixel_aspect_h), Int(ev.pixel_aspect_v)) : nil
-            let colour = ev.colour_primaries > 0 || ev.colour_transfer > 0 || ev.colour_matrix > 0
-                ? VideoColour(primaries: Int(ev.colour_primaries), transfer: Int(ev.colour_transfer),
-                              matrix: Int(ev.colour_matrix), fullRange: ev.full_range == 1) : nil
-            return (par, colour)
-        }
-        switch ev.kind {
-        case UInt32(ZM_EV_TRACK_ADDED), UInt32(ZM_EV_TRACK_UPDATED):
-            var t = TrackInfo(
-                trackID: ev.track_id, codec: Codec(rawValue: ev.codec) ?? .other,
-                timescale: Int32(ev.timescale), width: Int(ev.width), height: Int(ev.height),
-                channels: Int(ev.channels), sampleRate: Int(ev.sample_rate), pid: ev.pid,
-                config: bytes(ev.config, ev.config_len), descriptors: bytes(ev.descriptors, ev.descriptors_len))
-            t.language = withUnsafeBytes(of: ev.language) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
-            t.role = AudioRole(rawValue: ev.role) ?? .unknown
-            t.bitrate = Int(ev.bitrate)
-            t.scan = VideoScan(rawValue: ev.scan) ?? .unknown
-            (t.pixelAspect, t.colour) = geometry()
-            return ev.kind == UInt32(ZM_EV_TRACK_ADDED) ? .trackAdded(t) : .trackUpdated(t)
-        case UInt32(ZM_EV_TRACK_REMOVED):
-            return .trackRemoved(ev.track_id)
-        case UInt32(ZM_EV_SAMPLE):
-            var m = MediaSample(
-                trackID: ev.track_id, pts: ev.pts, dts: ev.dts, duration: ev.duration,
-                isSync: ev.is_sync, isRAP: ev.is_rap, data: bytes(ev.data, ev.data_len))
-            m.join = JoinDecision(rawValue: ev.join) ?? .keep
-            m.fields = Int(ev.fields)
-            m.bottomFieldFirst = ev.bottom_field_first < 0 ? nil : ev.bottom_field_first == 1
-            (m.pixelAspect, m.colour) = geometry()
-            return .sample(m)
-        case UInt32(ZM_EV_DISPLAY_CHANGED):
-            let (par, colour) = geometry()
-            return .displayChanged(trackID: ev.track_id, pts: ev.pts, pixelAspect: par, colour: colour)
-        case UInt32(ZM_EV_DISCONTINUITY):
-            return .discontinuity(trackID: ev.track_id == 0 ? nil : ev.track_id)
-        default:
-            return nextEvent()
-        }
+    }
+}
+
+func demuxEvent(from ev: zm_event) -> DemuxEvent? {
+    func bytes(_ p: UnsafePointer<UInt8>?, _ n: Int) -> Data {
+        guard let p, n > 0 else { return Data() }
+        return Data(bytes: p, count: n)
+    }
+    func geometry() -> (PixelAspect?, VideoColour?) {
+        let par = ev.pixel_aspect_h > 0 && ev.pixel_aspect_v > 0
+            ? PixelAspect(Int(ev.pixel_aspect_h), Int(ev.pixel_aspect_v)) : nil
+        let colour = ev.colour_primaries > 0 || ev.colour_transfer > 0 || ev.colour_matrix > 0
+            ? VideoColour(primaries: Int(ev.colour_primaries), transfer: Int(ev.colour_transfer),
+                          matrix: Int(ev.colour_matrix), fullRange: ev.full_range == 1) : nil
+        return (par, colour)
+    }
+    switch ev.kind {
+    case UInt32(ZM_EV_TRACK_ADDED), UInt32(ZM_EV_TRACK_UPDATED):
+        var t = TrackInfo(
+            trackID: ev.track_id, codec: Codec(rawValue: ev.codec) ?? .other,
+            timescale: Int32(ev.timescale), width: Int(ev.width), height: Int(ev.height),
+            channels: Int(ev.channels), sampleRate: Int(ev.sample_rate), pid: ev.pid,
+            config: bytes(ev.config, ev.config_len), descriptors: bytes(ev.descriptors, ev.descriptors_len))
+        t.language = withUnsafeBytes(of: ev.language) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+        t.role = AudioRole(rawValue: ev.role) ?? .unknown
+        t.bitrate = Int(ev.bitrate)
+        t.scan = VideoScan(rawValue: ev.scan) ?? .unknown
+        (t.pixelAspect, t.colour) = geometry()
+        return ev.kind == UInt32(ZM_EV_TRACK_ADDED) ? .trackAdded(t) : .trackUpdated(t)
+    case UInt32(ZM_EV_TRACK_REMOVED):
+        return .trackRemoved(ev.track_id)
+    case UInt32(ZM_EV_SAMPLE):
+        var m = MediaSample(
+            trackID: ev.track_id, pts: ev.pts, dts: ev.dts, duration: ev.duration,
+            isSync: ev.is_sync, isRAP: ev.is_rap, data: bytes(ev.data, ev.data_len))
+        m.join = JoinDecision(rawValue: ev.join) ?? .keep
+        m.fields = Int(ev.fields)
+        m.bottomFieldFirst = ev.bottom_field_first < 0 ? nil : ev.bottom_field_first == 1
+        (m.pixelAspect, m.colour) = geometry()
+        return .sample(m)
+    case UInt32(ZM_EV_DISPLAY_CHANGED):
+        let (par, colour) = geometry()
+        return .displayChanged(trackID: ev.track_id, pts: ev.pts, pixelAspect: par, colour: colour)
+    case UInt32(ZM_EV_DISCONTINUITY):
+        return .discontinuity(trackID: ev.track_id == 0 ? nil : ev.track_id)
+    default:
+        return nil
     }
 }

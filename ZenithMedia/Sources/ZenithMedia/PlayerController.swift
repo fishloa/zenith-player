@@ -9,7 +9,18 @@ import UIKit
 #endif
 
 public enum PlayerPhase: Equatable, Sendable {
-    case loading, playing, buffering(String?), reconnecting(attempt: Int), failed
+    case loading, playing, buffering(String?), reconnecting(attempt: Int), failed, needsCredentials(host: String), forbidden
+}
+
+public enum StreamCredential: Sendable {
+    case password(user: String, password: String)
+    case bearer(String)
+}
+
+enum BufferDecision: Equatable {
+    case start
+    case pause(holdAt: CMTime, starvingAudio: Bool)
+    case resume(at: CMTime)
 }
 
 /// An audio track the viewer can choose.
@@ -142,6 +153,7 @@ public struct PlayerStats: Sendable {
     /// VideoToolbox picked its hardware decoder for the current stream.
     public var hardwareDecode: Bool?
     public var restarts = 0
+    public var starts = 0
     /// Times the buffer ran dry and playback re-buffered in place.
     public var rebuffers = 0
     /// Starvations while no network data arrived for > 0.25 s (delivery stall)…
@@ -186,9 +198,6 @@ public final class PlayerController {
         chosenAudioTrack = trackID
         currentPipe?.selectAudio(trackID)
     }
-    /// Diagnostics: every live-buffer input as a CSV row (see LiveBuffer.inputLog),
-    /// called on the pipeline queue.
-    public var liveBufferLog: (@Sendable (String) -> Void)?
     /// live-buffer stall memory, carried across connections and channels
     /// (session scope: it describes the network path, not one channel).
     private var stallMemory: (peak: UInt64, age: UInt64)?
@@ -202,6 +211,9 @@ public final class PlayerController {
     private var task: Task<Void, Never>?
     private var generation = 0
     private var currentPipe: Pipeline?
+    private var currentSource: ClientSource?
+    private var currentURL: URL?
+    private var currentCredential: StreamCredential?
     private let work = DispatchQueue(label: "zenithmedia.player")
 
     /// The decode window allows this many frames beyond decodeAhead, and at
@@ -233,109 +245,154 @@ public final class PlayerController {
 
     public func play(_ source: @escaping () -> ByteSource) {
         stop()
+        currentURL = nil
+        currentCredential = nil
         chosenAudioTrack = nil; audioTracks = []; playingAudioTrack = nil
-        task = Task { [weak self] in await self?.runLoop(source) }
+        let gen = generation
+        let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
+                            isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
+                            isCurrent: { [weak self] in await MainActor.run { self?.generation == gen } },
+                            stallMemory: stallMemory, chosenAudio: chosenAudioTrack)
+        currentPipe = pipe
+        guard let src = ClientSource(bytes: source, startBuffer: policy.startBuffer, stallMemory: stallMemory, onEvents: { [weak pipe] events in pipe?.deliver(events) }) else {
+            phase = .failed
+            return
+        }
+        pipe.setSource(src)
+        currentSource = src
+        src.start()
+        startMonitoring(pipe: pipe, gen: gen, source: src)
+    }
+
+    public func play(url: URL, credential: StreamCredential? = nil) {
+        stop()
+        currentURL = url
+        currentCredential = credential
+        chosenAudioTrack = nil; audioTracks = []; playingAudioTrack = nil
+        let gen = generation
+        let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
+                            isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
+                            isCurrent: { [weak self] in await MainActor.run { self?.generation == gen } },
+                            stallMemory: stallMemory, chosenAudio: chosenAudioTrack)
+        currentPipe = pipe
+        guard let src = ClientSource(url: url, startBuffer: policy.startBuffer, stallMemory: stallMemory, onEvents: { [weak pipe] events in pipe?.deliver(events) }) else {
+            phase = .failed
+            return
+        }
+        pipe.setSource(src)
+        currentSource = src
+        if let credential {
+            switch credential {
+            case .password(let user, let password): src.setPassword(user: user, password: password)
+            case .bearer(let token): src.setBearer(token)
+            }
+        }
+        src.start()
+        startMonitoring(pipe: pipe, gen: gen, source: src)
     }
 
     public func stop() {
         generation += 1
-        currentPipe?.abort()          // old pipeline stops producing at once
+        if let m = currentSource?.stallMemory { stallMemory = (peak: m.peakUs, age: m.ageUs) }
+        currentSource?.close()
+        currentSource = nil
+        currentPipe?.abort()
         currentPipe = nil
         task?.cancel()
         task = nil
-        renderer.endSession()          // and anything already queued is dropped
+        renderer.endSession()
         phase = .loading
     }
 
-    // MARK: connection loop with back-off
-
-    private func runLoop(_ source: @escaping () -> ByteSource) async {
-        var attempt = 0
-        while !Task.isCancelled {
-            let gen = generation
-            let outcome = await runOnce(source(), gen: gen)
-            guard !Task.isCancelled, gen == generation else { return }
-            if outcome == .unsupported { phase = .failed; return }
-            if outcome == .playedThenEnded {
-                // The live stream played and then ended (server closed it): reconnect
-                // at once. Each such retry must reach playback again, so this can't spin.
-                attempt = 0
-                phase = .reconnecting(attempt: 1)
-                log.info("stream ended after playing; reconnecting now")
-                continue
-            }
-            attempt += 1
-            phase = .reconnecting(attempt: attempt)
-            let delay = attempt <= policy.reconnectDelays.count ? policy.reconnectDelays[attempt - 1] : policy.reconnectMax
-            log.info("reconnect attempt \(attempt) in \(delay)s")
-            try? await Task.sleep(for: .seconds(delay))
-        }
-    }
-
-    private enum Outcome { case failedBeforePlaying, playedThenEnded, unsupported }
-
-    private func runOnce(_ src: ByteSource, gen: Int) async -> Outcome {
-        let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
-                            isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
-                            isCurrent: { [weak self] in await MainActor.run { self?.generation == gen } },
-                            stallMemory: stallMemory, liveBufferLog: liveBufferLog, chosenAudio: chosenAudioTrack)
-        currentPipe = pipe
-        if case .reconnecting = phase {} else { phase = .loading }  // keep "Reconnecting… (n)" visible until playing
-        var played = false
-        var unsupported = false
-        let monitor = Task { [weak self] in
+    private func startMonitoring(pipe: Pipeline, gen: Int, source: ClientSource) {
+        task = Task { [weak self] in
+            guard let self else { return }
+            var played = false
             var waitStart: Date?
+            var authHost: String?
+            var loopedAtStart = 0
+            var reconnects = 0
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(100))
-                guard let self, gen == self.generation else { return }
+                guard !Task.isCancelled else { return }
+                guard self.generation == gen else { return }
                 let s = pipe.snapshot()
                 self.stats = s.stats
                 if let r = s.stats.outputFrameRate, r != self.outputFrameRate { self.outputFrameRate = r }
                 let opts = pipe.audioOptions
                 if opts != self.audioTracks { self.audioTracks = opts }
                 if s.stats.audioTrack != self.playingAudioTrack { self.playingAudioTrack = s.stats.audioTrack }
+                if s.state == .running { played = true }
+                if let ae = pipe.sessionAuthEvent {
+                    switch ae {
+                    case .authRequired(_, _, let origin, _):
+                        authHost = URL(string: origin)?.host ?? origin
+                        self.phase = .needsCredentials(host: authHost ?? "")
+                        continue
+                    case .authRejected:
+                        self.phase = .needsCredentials(host: authHost ?? "")
+                        continue
+                    case .forbidden:
+                        self.phase = .forbidden
+                        continue
+                    case .error(_, fatal: true):
+                        self.phase = .forbidden
+                        continue
+                    default: break
+                    }
+                }
+                let status = pipe.sessionStatusValue
+                if status == .notFound { self.phase = .failed; continue }
+                if status == .waitingForCredentials { self.phase = .needsCredentials(host: authHost ?? ""); continue }
+                if status == .ended, !pipe.sessionFiniteValue, played, s.state != .running || s.stats.bufferedSeconds < 0.05 {
+                    guard let url = self.currentURL else { self.phase = .failed; continue }
+                    let cred = self.currentCredential
+                    Task { @MainActor in self.play(url: url, credential: cred) }
+                    return
+                }
+                if status == .ended, played, s.state != .running || s.stats.bufferedSeconds < 0.05 {
+                    if s.stats.starts > loopedAtStart {
+                        loopedAtStart = s.stats.starts
+                        source.reconnect()
+                    }
+                    continue
+                }
                 switch s.state {
                 case .running:
-                    played = true; waitStart = nil
+                    played = true; waitStart = nil; reconnects = 0
                     if self.phase != .playing { self.phase = .playing }
                 case .noVideo:
-                    unsupported = true
+                    self.phase = .failed
                     pipe.abort()
+                    source.close()
                 case .starting, .starved:
-                    // Starved: the pipeline has paused the clock and is refilling.
-                    // Starting: first start or after a restart. Either way, give up
-                    // and reconnect if nothing plays for stallReconnectAfter.
                     let since = waitStart ?? Date(); waitStart = since
                     let t = Date().timeIntervalSince(since)
-                    if played {
+                    if case .reconnecting(let n)? = status {
+                        self.phase = .reconnecting(attempt: n)
+                    } else if reconnects > 0 {
+                        self.phase = .reconnecting(attempt: reconnects)
+                    } else if played {
                         self.phase = .buffering(t > self.policy.stallMessageAfter ? "Waiting for server… (\(Int(t))s)" : "Buffering…")
                     }
-                    if t > (played ? self.policy.stallReconnectAfter : self.policy.startTimeout) { pipe.abort() }
+                    if t > (played ? self.policy.stallReconnectAfter : self.policy.startTimeout) {
+                        waitStart = nil
+                        reconnects += 1
+                        self.phase = .reconnecting(attempt: reconnects)
+                        pipe.restartOnQueue(newTimeline: true)
+                        source.reconnect()
+                    }
                 case .decoderBroken:
-                    pipe.abort()
+                    reconnects += 1
+                    self.phase = .reconnecting(attempt: reconnects)
+                    pipe.restartOnQueue(newTimeline: false)
+                    source.reconnect()
                 }
             }
         }
-        // The read loop runs in its own task so abort() (stall, broken decoder)
-        // can cancel it even while it is suspended waiting for bytes.
-        let reader = Task {
-            do {
-                for try await chunk in src.bytes() {
-                    if Task.isCancelled || pipe.aborted { break }
-                    await pipe.feed(chunk)
-                }
-            } catch {
-                log.error("source error: \(String(describing: error))")
-            }
-        }
-        pipe.onAbort = { reader.cancel() }
-        await withTaskCancellationHandler { await reader.value } onCancel: { reader.cancel() }
-        monitor.cancel()
-        stallMemory = pipe.stallMemory          // the path's stall history outlives the connection
-        await pipe.shutdown()
-        if unsupported { return .unsupported }
-        return played ? .playedThenEnded : .failedBeforePlaying
     }
+
+    // MARK: per-connection pipeline follows
 }
 
 /// The per-connection pipeline. Lives on `queue`; the controller reads
@@ -364,7 +421,7 @@ final class Pipeline: @unchecked Sendable {
     private var timer: DispatchSourceTimer?
 
     // Queue-confined state.
-    private let demux = TsDemuxer()
+    private weak var source: ClientSource?
     private var tracks: [UInt32: TrackInfo] = [:]
     private var video: (info: TrackInfo, decoder: VideoDecoding, deint: Deinterlacer?)?
     private var audio: (info: TrackInfo, factory: AudioSampleFactory)?
@@ -384,7 +441,6 @@ final class Pipeline: @unchecked Sendable {
     private var epochSnapshot = 0
     private var startPTS: Int64?            // join point PTS (video timescale)
     private var lastVideoPTS: Int64?        // newest demuxed video PTS
-    private var lastVideoAt: Double?        // uptime (s) when lastVideoPTS was demuxed
     /// End of the newest demuxed audio frame (selected track).
     private var lastAudioEnd: CMTime?
     /// Demuxed, not yet decoded video (decode order).
@@ -398,20 +454,10 @@ final class Pipeline: @unchecked Sendable {
     private var holdAt = CMTime.invalid
     private var decoderFailures: [Date] = []
     private var consecutiveDecodeErrors = 0
-    /// rust-broadcast live-buffer: delivery jitter, buffer target and the
-    /// start / pause / resume decisions. Video reports as track 1, audio as 2
-    /// (logical ids, so an audio pick change never leaves a dead track).
-    private let lb: LiveBuffer?
-    private static let lbVideo: UInt32 = 1, lbAudio: UInt32 = 2
     private var startAllowed = false
-    private var audioUnregistered = false
     /// The viewer's audio choice (queue-confined); nil = automatic.
     private var chosenAudio: UInt32?
     private var pubAudioOptions: [AudioTrackOption] = []
-    /// Media ends reached while demuxing the current chunk: reported once per
-    /// chunk (a delivery), so live-buffer sees the real delivery granularity
-    /// (rai-3: one 0.3 s audio PES per delivery, not twelve 24 ms frames).
-    private var pendingVideoEnd: CMTime?, pendingAudioEnd: CMTime?
     /// Field order: the override if given, else learned from the samples'
     /// slice headers / pic_struct (transmux R3); broadcast default TFF.
     private var tff = true
@@ -434,6 +480,9 @@ final class Pipeline: @unchecked Sendable {
     private var pubLastVideoSeconds: Double?
     private var pubLastEnqueuedVideoSeconds: Double?
     private var pubHasVideo = false
+    private var pubStatus: SessionStatus?
+    private var pubAuth: ClientEvent?
+    private var pubFinite = false
     private var firstTrackAt: Date?
     private var _aborted = false
     private var _onAbort: (() -> Void)?
@@ -446,17 +495,10 @@ final class Pipeline: @unchecked Sendable {
          isInterlaced: @escaping (TrackInfo) -> Bool, topFieldFirst: ((TrackInfo) -> Bool)?,
          makeDecoder: @escaping @Sendable (TrackInfo) throws -> VideoDecoding,
          queue: DispatchQueue, isCurrent: @escaping @Sendable () async -> Bool,
-         stallMemory: (peak: UInt64, age: UInt64)? = nil, liveBufferLog: (@Sendable (String) -> Void)? = nil,
+         stallMemory: (peak: UInt64, age: UInt64)? = nil,
          chosenAudio: UInt32? = nil) {
         factory = makeDecoder
         self.chosenAudio = chosenAudio
-        lb = LiveBuffer(initialStart: policy.startBuffer, seed: stallMemory)
-        lb?.inputLog = liveBufferLog
-        // Every track we will play is registered before the first delivery, so
-        // the start waits for audio too (live-buffer #1364). A channel without
-        // audio starts once the silence timeout drops the audio track.
-        lb?.register(track: Self.lbVideo)
-        lb?.register(track: Self.lbAudio)
         self.renderer = renderer; self.policy = policy; self.chooseAudio = chooseAudio
         self.isInterlaced = isInterlaced; self.topFieldFirst = topFieldFirst; self.queue = queue; self.isCurrent = isCurrent
         session = renderer.beginSession()
@@ -527,41 +569,78 @@ final class Pipeline: @unchecked Sendable {
         queue.async { self.timer?.cancel(); self.video?.decoder.invalidate() }
     }
 
-    func feed(_ chunk: Data) async {
-        guard await isCurrent(), !aborted else { abort(); return }
+    /// Stall memory to seed the next connection's controller (session scope).
+    var stallMemory: (peak: UInt64, age: UInt64)? {
+        source?.stallMemory.map { (peak: $0.peakUs, age: $0.ageUs) }
+    }
+
+    func setSource(_ s: ClientSource?) { source = s }
+
+    private func noteDelivery() {
         let now = Date()
-        let arrivalUs = LiveBuffer.nowUs()
         lock.lock()
         if let last = lastChunkAt { stats.maxChunkGap = max(stats.maxChunkGap, now.timeIntervalSince(last)) }
         if stats.firstByteAfter == nil { stats.firstByteAfter = now.timeIntervalSince(born) }
         lastChunkAt = now
         lock.unlock()
-        defer {
-            let t = Date().timeIntervalSince(now)
-            lock.lock(); stats.maxFeedSeconds = max(stats.maxFeedSeconds, t); lock.unlock()
-        }
-        await withCheckedContinuation { cont in
-            queue.async {
-                if !self.aborted {
-                    let t0 = CACurrentMediaTime()
-                    self.demux.feed(chunk)
-                    let dt = CACurrentMediaTime() - t0
-                    if dt > self.stats.maxDemuxFeed { self.lock.lock(); self.stats.maxDemuxFeed = dt; self.lock.unlock() }
-                    while !self.aborted, let ev = self.demux.nextEvent() { self.handle(ev) }
-                    self.lb?.chunk(arrivalUs: arrivalUs, bytes: chunk.count, pcr27: self.demux.takePCR())
-                    self.reportMediaEnds()
-                    self.pump()
+    }
+
+    func deliver(_ events: [ClientEvent]) {
+        queue.async { [weak self] in
+            guard let self, !self.aborted else { return }
+            if events.contains(where: { if case .media = $0 { return true }; return false }) { self.noteDelivery() }
+            for ev in events {
+                switch ev {
+                case .media(let de):
+                    self.lock.lock(); self.pubAuth = nil; self.lock.unlock()
+                    self.handle(de)
+                case .buffer(let be):
+                    switch be {
+                    case .start: self.apply(.start)
+                    case .pause(let hold, let track):
+                        let starvingAudio = (track != nil && track == self.audio?.info.trackID)
+                        self.apply(.pause(holdAt: CMTime(value: Int64(hold), timescale: 27_000_000), starvingAudio: starvingAudio))
+                    case .resume(let at27):
+                        self.apply(.resume(at: CMTime(value: Int64(at27), timescale: 27_000_000)))
+                    }
+                case .starved:
+                    break
+                case .status(let s):
+                    self.lock.lock(); self.pubStatus = s; self.lock.unlock()
+                case .authRequired, .authRejected, .forbidden, .error(_, fatal: true):
+                    self.lock.lock(); self.pubAuth = ev; self.lock.unlock()
+                case .finite:
+                    self.lock.lock(); self.pubFinite = true; self.lock.unlock()
+                default: break
                 }
-                cont.resume()
             }
+            self.pump()
         }
     }
 
-    /// Stall memory to seed the next connection's controller (session scope).
-    var stallMemory: (peak: UInt64, age: UInt64)? {
-        var m: (peak: UInt64, age: UInt64)?
-        queue.sync { m = lb?.memory }
-        return m
+    var sessionStatusValue: SessionStatus? {
+        lock.lock(); defer { lock.unlock() }; return pubStatus
+    }
+    var sessionAuthEvent: ClientEvent? {
+        lock.lock(); defer { lock.unlock() }; return pubAuth
+    }
+    var sessionFiniteValue: Bool {
+        lock.lock(); defer { lock.unlock() }; return pubFinite
+    }
+
+    /// The session renders the first video and first audio track by default
+    /// (and video only on a channel without audio). The player declares its
+    /// own set only when its audio choice differs, as the session would
+    /// otherwise wait for a track whose samples have already gone by.
+    private var renderedTracks: [UInt32]?
+    private func updateRenderedTracks() {
+        guard let v = video?.info.trackID, let a = audio?.info.trackID else { return }
+        let firstAudio = tracks.values.filter { [.aac, .ac3, .eac3, .mpegAudio].contains($0.codec) }.map(\.trackID).min()
+        let ids = [v, a]
+        if renderedTracks == nil, a == firstAudio { return }
+        guard ids != renderedTracks else { return }
+        renderedTracks = ids
+        source?.setRenderedTracks(ids)
     }
 
     func shutdown() async {
@@ -611,6 +690,7 @@ final class Pipeline: @unchecked Sendable {
                     setUpVideo(t)
                 }
                 publish()
+                updateRenderedTracks()
             }
             pickAudio(switching: false)
         case .trackRemoved(let id):
@@ -625,7 +705,7 @@ final class Pipeline: @unchecked Sendable {
         case .discontinuity(let track):
             // A gap on one audio PID is that track's problem; only a video
             // (or stream-wide) discontinuity invalidates the timeline.
-            if track == nil || track == video?.info.trackID { restart(newTimeline: true) }
+            if track == nil || track == video?.info.trackID { restart(newTimeline: true, fromSession: true) }
         case .sample(let s):
             if s.trackID == video?.info.trackID { videoSample(s) } else if s.trackID == audio?.info.trackID { audioSample(s) }
         }
@@ -645,13 +725,13 @@ final class Pipeline: @unchecked Sendable {
             return
         }
         let wasPlaying = audio != nil && started
-        if audioUnregistered { lb?.register(track: Self.lbAudio); audioUnregistered = false }
         audio = (pick, f)
         audioQ.removeAll { $0.trackID != pick.trackID }
         if wasPlaying && switching {
             renderer.flushAudio(session: session)
-            audioQ.removeAll(); lastAudioEnd = nil; pendingAudioEnd = nil
+            audioQ.removeAll(); lastAudioEnd = nil
         }
+        updateRenderedTracks()
         lock.lock(); stats.audioTrack = pick.trackID; stats.audioTrackLabel = "\(pick.codec) \(pick.channels)ch \(pick.language)"; lock.unlock()
     }
 
@@ -680,15 +760,8 @@ final class Pipeline: @unchecked Sendable {
         old.decoder.invalidate()
         video = (t, dec, deinterlacer(for: t, reusing: old.deint))
         submittedGeometry[t.trackID] = nil
-        if rejoin { videoQ = []; demux.rejoin(track: t.trackID) }
-    }
-
-    /// A new timeline (source switch, discontinuity): PTS steps back more than
-    /// 1 s, or forward more than 5 s beyond the time that actually passed.
-    /// Sparse pictures (a still slate sends one every 2.3 s) and catch-up
-    /// bursts after a delivery gap are not jumps.
-    static func isNewTimeline(ptsStep: Double, elapsed: Double) -> Bool {
-        ptsStep < -1 || ptsStep > max(elapsed, 0) + 5
+        if rejoin { videoQ = [] }
+        updateRenderedTracks()
     }
 
     /// The scan can change with the parameter sets (a progressive still slate
@@ -703,37 +776,51 @@ final class Pipeline: @unchecked Sendable {
         guard let dec = makeDecoder(t) else { return }
         video = (t, dec, deinterlacer(for: t, reusing: nil))
         submittedGeometry[t.trackID] = nil
-        restart(newTimeline: false)
+        updateRenderedTracks()
+        restart(newTimeline: false, rejoinSession: false)
     }
 
     /// Back to start-up: flush the screen, new decoder session, wait for the
     /// next join point. `newTimeline` (discontinuity / PTS jump) also drops
     /// queued audio, which belongs to the old timeline.
-    private func restart(newTimeline: Bool) {
+    func restartOnQueue(newTimeline: Bool) {
+        queue.async { [weak self] in
+            guard let self, !self.aborted else { return }
+            self.decoderFailures = []
+            self.consecutiveDecodeErrors = 0
+            self.restart(newTimeline: newTimeline)
+        }
+    }
+
+    /// `rejoinSession`: false for the first decoder, whose samples the session
+    /// has already judged; rejoining then would discard that join point.
+    /// After a restart the player starts itself (timeline jump, decoder reset)
+    /// the session has usually judged the following samples already, so its
+    /// next join point may never come: the first random-access picture joins.
+    private var playerJoin = false
+
+    private func restart(newTimeline: Bool, rejoinSession: Bool = true, fromSession: Bool = false) {
         if started { lock.lock(); stats.restarts += 1; lock.unlock() }
         renderer.flush(session: session)
         if let v = video { replaceDecoder(v.info, rejoin: true) }
         video?.deint?.reset()
         if newTimeline { audioQ = [] }
-        startPTS = nil; lastVideoPTS = nil; lastVideoAt = nil; videoQ = []; bufferedVideo = []
+        startPTS = nil; lastVideoPTS = nil; videoQ = []; bufferedVideo = []
         if newTimeline { lastAudioEnd = nil }
         started = false; paused = false; holdAt = .invalid; startAllowed = false
-        pendingVideoEnd = nil; pendingAudioEnd = nil
-        if newTimeline { lb?.hint(.pcrDiscontinuity) }
+        playerJoin = rejoinSession && !fromSession
+        if playerJoin, let v = video { source?.rejoin(track: v.info.trackID) }
         lock.lock(); pubLastEnqueuedVideoSeconds = nil; lock.unlock()
         publish()
         setState(.starting)
     }
 
+    private func join(at pts: Int64) {
+        startPTS = pts; joinedAt = Date()
+    }
+
     private func videoSample(_ s: MediaSample) {
-        guard let v = video else { return }
-        let now = Double(DispatchTime.now().uptimeNanoseconds) / 1e9
-        if let last = lastVideoPTS, let at = lastVideoAt,
-           Self.isNewTimeline(ptsStep: Double(s.pts - last) / Double(v.info.timescale), elapsed: now - at) {
-            restart(newTimeline: true)
-            return
-        }
-        lastVideoAt = now
+        guard video != nil else { return }
         // Join decisions come from transmux's LiveJoin (R4).
         switch s.join {
         case .dropBeforeRAP, .dropNotSelfContained:
@@ -741,25 +828,21 @@ final class Pipeline: @unchecked Sendable {
         case .dropLeading:
             lock.lock(); stats.leadingPictures += 1; lock.unlock(); return
         case .joinPoint:
-            if startPTS == nil {
-                startPTS = s.pts; joinedAt = Date()
-                // No audio chosen by the video join point: play video-only now
-                // rather than wait out live-buffer's silence timeout.
-                if audio == nil { lb?.unregister(track: Self.lbAudio); audioUnregistered = true }
-                // live-buffer takes the first reported position as the start
-                // origin: report the join point first (zero-length), before
-                // any audio, so the lead is counted from where playback starts.
-                lb?.media(track: Self.lbVideo, end: videoTime(s.pts))
-            }
+            playerJoin = false
+            if startPTS == nil { join(at: s.pts) }
             lock.lock(); if stats.joinPointAfter == nil { stats.joinPointAfter = Date().timeIntervalSince(born) }; lock.unlock()
         case .keep:
+            if startPTS == nil, playerJoin, s.isRAP, s.isSync {
+                playerJoin = false
+                join(at: s.pts)
+                lock.lock(); if stats.joinPointAfter == nil { stats.joinPointAfter = Date().timeIntervalSince(born) }; lock.unlock()
+            }
             guard startPTS != nil else { lock.lock(); stats.framesDroppedBeforeRAP += 1; lock.unlock(); return }
         }
         if let b = s.bottomFieldFirst { tff = !b }
         lastVideoPTS = max(lastVideoPTS ?? s.pts, s.pts)
         publish()
         videoQ.append(s)
-        if let last = lastVideoPTS { pendingVideoEnd = videoTime(last + Int64(s.duration)) }
     }
 
     /// Hand queued samples to the decode worker while the decode window (from
@@ -911,9 +994,6 @@ final class Pipeline: @unchecked Sendable {
         let end = audioTime(s) + CMTime(value: CMTimeValue(s.duration), timescale: a.info.timescale)
         lastAudioEnd = max(lastAudioEnd ?? end, end)
         publish()
-        // Audio before the video join point would anchor the start origin too
-        // early (it arrives first in the mux) and eat the audio cushion.
-        if let e = lastAudioEnd, let s0 = startPTS, e > videoTime(s0) { pendingAudioEnd = e }
         if !started {
             // Keep at most ~10 s; abs() so a backwards timeline can't pin it.
             while let first = audioQ.first, audioQ.count > 1,
@@ -950,29 +1030,22 @@ final class Pipeline: @unchecked Sendable {
         return Date().timeIntervalSince(j) > 3
     }
     private var joinedAt: Date?
-
-    private func reportMediaEnds() {
-        if let v = pendingVideoEnd { lb?.media(track: Self.lbVideo, end: v); pendingVideoEnd = nil }
-        if let a = pendingAudioEnd { lb?.media(track: Self.lbAudio, end: a); pendingAudioEnd = nil }
-    }
-
     private func pump() {
         // 1. Decode video up to decodeAhead past the clock (decode order, so DTS).
         if video != nil { decodeQueued() }
         guard !aborted, let clock = clockTime() else { return }
         // 2. Audio up to audioAhead past the clock.
         if started { feedAudio(upTo: clock + CMTime(seconds: policy.audioAhead, preferredTimescale: 90000)) }
-        // 3. Buffer decisions: live-buffer's.
-        lb?.tick(playback: started ? clock : nil)
-        for d in lb?.decisions() ?? [] { apply(d) }
+        // 3. Buffer decisions now arrive via deliver; tell the session our position.
+        source?.setPlaybackPosition(started && !paused ? ticks27(clock) : nil)
         if !started { maybeStart() }
     }
 
-    private func apply(_ d: LiveBuffer.Decision) {
+    private func apply(_ d: BufferDecision) {
         switch d {
         case .start:
             startAllowed = true
-        case .pause(let hold, let track):
+        case .pause(let hold, let starvingAudio):
             guard started, !paused, policy.rebufferOnStarvation else { return }
             holdAt = hold
             paused = true
@@ -981,9 +1054,9 @@ final class Pipeline: @unchecked Sendable {
             stats.rebuffers += 1
             let age = lastChunkAt.map { Date().timeIntervalSince($0) } ?? .infinity
             if age > 0.25 { stats.starvedNoData += 1 } else { stats.starvedWithData += 1 }
-            if track == Self.lbAudio { stats.starvedOnAudio += 1 }
-            if let l = lb?.stats, let c = clockTime() {
-                stats.lastPauseInfo = (stats.lastPauseInfo.map { $0 + " | " } ?? "") + "t+\(String(format: "%.1f", Date().timeIntervalSince(born)))s pause at \(String(format: "%.3f", CMTimeGetSeconds(c))) lead \(l.leadUs / 1000) ms target \(l.targetUs / 1000) ms track \(track.map(String.init) ?? "-") video_end \(lastVideoPTS.map { String(format: "%.3f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end \(lastAudioEnd.map { String(format: "%.3f", CMTimeGetSeconds($0)) } ?? "-")"
+            if starvingAudio { stats.starvedOnAudio += 1 }
+            if let c = clockTime() {
+                stats.lastPauseInfo = (stats.lastPauseInfo.map { $0 + " | " } ?? "") + "t+\(String(format: "%.1f", Date().timeIntervalSince(born)))s pause at \(String(format: "%.3f", CMTimeGetSeconds(c))) video_end \(lastVideoPTS.map { String(format: "%.3f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end \(lastAudioEnd.map { String(format: "%.3f", CMTimeGetSeconds($0)) } ?? "-")"
             }
             state = .starved
             lock.unlock()
@@ -996,11 +1069,9 @@ final class Pipeline: @unchecked Sendable {
             holdAt = at
             renderer.resume(at: at, session: session)
             setState(.running)
-            if let l = lb?.stats {
-                lock.lock()
-                stats.lastPauseInfo = (stats.lastPauseInfo ?? "") + " -> resume at \(String(format: "%.3f", CMTimeGetSeconds(at))) lead \(l.leadUs / 1000) ms target \(l.targetUs / 1000) ms video_end \(lastVideoPTS.map { String(format: "%.3f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end \(lastAudioEnd.map { String(format: "%.3f", CMTimeGetSeconds($0)) } ?? "-")"
-                lock.unlock()
-            }
+            lock.lock()
+            stats.lastPauseInfo = (stats.lastPauseInfo ?? "") + " -> resume at \(String(format: "%.3f", CMTimeGetSeconds(at))) video_end \(lastVideoPTS.map { String(format: "%.3f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end \(lastAudioEnd.map { String(format: "%.3f", CMTimeGetSeconds($0)) } ?? "-")"
+            lock.unlock()
         }
     }
 
@@ -1022,6 +1093,7 @@ final class Pipeline: @unchecked Sendable {
                 log.error("audio renderer failed; continuing video-only")
                 audio = nil
                 audioQ = []
+                updateRenderedTracks()
                 lock.lock(); stats.audioTrack = nil; lock.unlock()
                 return
             }
@@ -1055,6 +1127,7 @@ final class Pipeline: @unchecked Sendable {
         }
         lock.lock()
         stats.framesEnqueued += bufferedVideo.count
+        stats.starts += 1
         pubLastEnqueuedVideoSeconds = bufferedVideo.last.map { CMTimeGetSeconds($0.pts) }
         if stats.firstFrameAfter == nil { stats.firstFrameAfter = Date().timeIntervalSince(born) }
         if let firstAudio { stats.avOffset = CMTimeGetSeconds(firstAudio - first.pts) }
@@ -1065,4 +1138,9 @@ final class Pipeline: @unchecked Sendable {
         publish()
         setState(.running)
     }
+}
+
+private func ticks27(_ t: CMTime) -> UInt64 {
+    let v = CMTimeConvertScale(t, timescale: 27_000_000, method: .roundTowardZero).value
+    return UInt64(max(0, v))
 }

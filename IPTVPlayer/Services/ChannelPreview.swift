@@ -12,7 +12,7 @@ protocol PreviewPlaying {
 #if os(tvOS)
 extension PlayerController: @MainActor PreviewPlaying {
     func play(url: URL) {
-        play { HTTPByteSource(url: url) }
+        play(url: url, credential: AuthorizedFetcher.streamCredential(for: url))
     }
 }
 #endif

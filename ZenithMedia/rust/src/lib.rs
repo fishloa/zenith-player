@@ -4,10 +4,12 @@
 //! thread-safe; use each from one queue.
 
 pub mod demux;
-pub mod lb;
 pub mod mpa;
+pub mod session;
 
 use demux::{Demux, Event};
+use session::Client;
+use std::ffi::{CStr, CString};
 
 #[repr(C)]
 pub struct ZmEvent {
@@ -47,6 +49,15 @@ pub struct ZmEvent {
     pub colour_transfer: u8,  // wire transfer_characteristics, 0 = not signalled
     pub colour_matrix: u8,    // wire matrix_coefficients, 0 = not signalled
     pub full_range: u8,       // 1 = signalled full range
+    pub status: u32,
+    pub status_value: u64,
+    pub http_status: u16,
+    pub starved_with_data: u8,
+    pub auth_scheme: *const std::ffi::c_char,
+    pub auth_realm: *const std::ffi::c_char,
+    pub auth_origin: *const std::ffi::c_char,
+    pub auth_metadata: *const std::ffi::c_char,
+    pub text: *const std::ffi::c_char,
 }
 
 pub struct ZmDemux {
@@ -109,7 +120,17 @@ pub unsafe extern "C" fn zm_demux_poll(p: *mut ZmDemux, ev: *mut ZmEvent) -> boo
     }
     let d = &mut *p;
     d.held = d.demux.poll();
-    let mut out = ZmEvent {
+    let Some(held) = d.held.as_ref() else {
+        return false;
+    };
+    let mut out = zeroed_zm_event();
+    fill_demux_event(&mut out, held);
+    *ev = out;
+    true
+}
+
+fn zeroed_zm_event() -> ZmEvent {
+    ZmEvent {
         kind: 0, track_id: 0, codec: 0, timescale: 0, width: 0, height: 0, channels: 0, pid: 0,
         sample_rate: 0, config: std::ptr::null(), config_len: 0, descriptors: std::ptr::null(),
         descriptors_len: 0, pts: 0, dts: 0, duration: 0, is_sync: false, is_rap: false,
@@ -117,38 +138,38 @@ pub unsafe extern "C" fn zm_demux_poll(p: *mut ZmDemux, ev: *mut ZmEvent) -> boo
         role: 0, scan: 0, bitrate: 0, language: [0; 4], join: 0, fields: 0, bottom_field_first: -1,
         pixel_aspect_h: 0, pixel_aspect_v: 0,
         colour_primaries: 0, colour_transfer: 0, colour_matrix: 0, full_range: 0,
-    };
-    fn put_geometry(out: &mut ZmEvent, g: &demux::Geometry) {
-        if let Some((h, v)) = g.pixel_aspect {
-            (out.pixel_aspect_h, out.pixel_aspect_v) = (h, v);
-        }
-        if let Some(c) = g.colour {
-            (out.colour_primaries, out.colour_transfer, out.colour_matrix) = (c.primaries, c.transfer, c.matrix);
-            out.full_range = u8::from(c.full_range);
-        }
+        status: 0, status_value: 0, http_status: 0, starved_with_data: 0,
+        auth_scheme: std::ptr::null(), auth_realm: std::ptr::null(),
+        auth_origin: std::ptr::null(), auth_metadata: std::ptr::null(),
+        text: std::ptr::null(),
     }
-    match &d.held {
-        None => return false,
-        Some(Event::TrackAdded(t)) | Some(Event::TrackUpdated(t)) => {
-            out.kind = if matches!(d.held, Some(Event::TrackAdded(_))) { 1 } else { 2 };
-            out.track_id = t.track_id;
-            out.codec = t.codec as u32;
-            out.timescale = t.timescale;
-            (out.width, out.height, out.channels, out.pid, out.sample_rate) =
-                (t.width, t.height, t.channels, t.pid, t.sample_rate);
-            (out.config, out.config_len) = (t.config.as_ptr(), t.config.len());
-            (out.descriptors, out.descriptors_len) = (t.descriptors.as_ptr(), t.descriptors.len());
-            (out.role, out.scan, out.bitrate) = (t.role as u32, t.scan as u32, t.bitrate);
-            for (i, b) in t.language.bytes().take(3).enumerate() {
-                out.language[i] = b;
-            }
-            put_geometry(&mut out, &demux::Geometry { pixel_aspect: t.pixel_aspect, colour: t.colour });
+}
+
+fn put_geometry(out: &mut ZmEvent, g: &demux::Geometry) {
+    if let Some((h, v)) = g.pixel_aspect {
+        (out.pixel_aspect_h, out.pixel_aspect_v) = (h, v);
+    }
+    if let Some(c) = g.colour {
+        (out.colour_primaries, out.colour_transfer, out.colour_matrix) = (c.primaries, c.transfer, c.matrix);
+        out.full_range = u8::from(c.full_range);
+    }
+}
+
+fn fill_demux_event(out: &mut ZmEvent, ev: &Event) {
+    match ev {
+        Event::TrackAdded(t) => {
+            out.kind = 1;
+            fill_track(out, t);
         }
-        Some(Event::TrackRemoved(id)) => {
+        Event::TrackUpdated(t) => {
+            out.kind = 2;
+            fill_track(out, t);
+        }
+        Event::TrackRemoved(id) => {
             out.kind = 3;
             out.track_id = *id;
         }
-        Some(Event::Sample(s)) => {
+        Event::Sample(s) => {
             out.kind = 4;
             out.track_id = s.track_id;
             (out.pts, out.dts, out.duration, out.is_sync, out.is_rap) = (s.pts, s.dts, s.duration, s.is_sync, s.is_rap);
@@ -156,21 +177,34 @@ pub unsafe extern "C" fn zm_demux_poll(p: *mut ZmDemux, ev: *mut ZmEvent) -> boo
             (out.join, out.fields) = (s.join as u32, s.fields);
             out.bottom_field_first = s.bottom_field_first.map_or(-1, |b| b as i8);
         }
-        Some(Event::Discontinuity(t)) => {
+        Event::Discontinuity(t) => {
             out.kind = 5;
             out.track_id = t.unwrap_or(0);
         }
-        Some(Event::DisplayChanged { track_id, pts, geometry }) => {
+        Event::DisplayChanged { track_id, pts, geometry } => {
             out.kind = 6;
             out.track_id = *track_id;
             out.pts = pts.unwrap_or(0);
             if let Some(g) = geometry {
-                put_geometry(&mut out, g);
+                put_geometry(out, g);
             }
         }
     }
-    *ev = out;
-    true
+}
+
+fn fill_track(out: &mut ZmEvent, t: &demux::TrackInfo) {
+    out.track_id = t.track_id;
+    out.codec = t.codec as u32;
+    out.timescale = t.timescale;
+    (out.width, out.height, out.channels, out.pid, out.sample_rate) =
+        (t.width, t.height, t.channels, t.pid, t.sample_rate);
+    (out.config, out.config_len) = (t.config.as_ptr(), t.config.len());
+    (out.descriptors, out.descriptors_len) = (t.descriptors.as_ptr(), t.descriptors.len());
+    (out.role, out.scan, out.bitrate) = (t.role as u32, t.scan as u32, t.bitrate);
+    for (i, b) in t.language.bytes().take(3).enumerate() {
+        out.language[i] = b;
+    }
+    put_geometry(out, &demux::Geometry { pixel_aspect: t.pixel_aspect, colour: t.colour });
 }
 
 pub struct ZmMpa(mpa::Mpa);
@@ -235,5 +269,598 @@ pub unsafe extern "C" fn zm_demux_take_pcr(p: *mut ZmDemux, out: *mut u64) -> bo
             true
         }
         None => false,
+    }
+}
+
+#[repr(C)]
+pub struct ZmAction {
+    pub kind: u32,
+    pub conn: u32,
+    pub method: *const std::ffi::c_char,
+    pub url: *const std::ffi::c_char,
+    pub headers: *const std::ffi::c_char,
+    pub has_range: bool,
+    pub range_start: u64,
+    pub range_len: u64,
+    pub wake_us: u64,
+}
+
+pub struct ZmSession {
+    client: Client,
+    held_action: Option<HeldAction>,
+    held_event: Option<HeldEvent>,
+}
+
+struct HeldAction {
+    method: Option<CString>,
+    url: Option<CString>,
+    headers: Option<CString>,
+    kind: u32,
+    conn: u32,
+    has_range: bool,
+    range_start: u64,
+    range_len: u64,
+    wake_us: u64,
+}
+
+struct HeldEvent {
+    client_event: session::ClientEvent,
+    auth_scheme: Option<CString>,
+    auth_realm: Option<CString>,
+    auth_origin: Option<CString>,
+    auth_metadata: Option<CString>,
+    text: Option<CString>,
+}
+
+impl HeldEvent {
+    fn new(ce: session::ClientEvent) -> Self {
+        let mut h = HeldEvent {
+            client_event: ce,
+            auth_scheme: None,
+            auth_realm: None,
+            auth_origin: None,
+            auth_metadata: None,
+            text: None,
+        };
+        if let session::ClientEvent::AuthRequired {
+            scheme,
+            realm,
+            origin,
+            resource_metadata,
+        } = &h.client_event
+        {
+            h.auth_scheme = CString::new(scheme.clone()).ok();
+            h.auth_realm = realm.as_ref().and_then(|r| CString::new(r.clone()).ok());
+            h.auth_origin = CString::new(origin.clone()).ok();
+            h.auth_metadata = resource_metadata.as_ref().and_then(|m| CString::new(m.clone()).ok());
+        }
+        if let session::ClientEvent::Variants { lines, .. } = &h.client_event {
+            h.text = CString::new(lines.join("\n")).ok();
+        }
+        if let session::ClientEvent::Error { name, .. } = &h.client_event {
+            h.text = CString::new(name.clone()).ok();
+        }
+        h
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_open(url: *const std::ffi::c_char, now_us: u64) -> *mut ZmSession {
+    if url.is_null() {
+        return std::ptr::null_mut();
+    }
+    let Ok(s) = CStr::from_ptr(url).to_str() else {
+        return std::ptr::null_mut();
+    };
+    match Client::open(s, now_us) {
+        Ok(client) => Box::into_raw(Box::new(ZmSession {
+            client,
+            held_action: None,
+            held_event: None,
+        })),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_open_with_memory(
+    url: *const std::ffi::c_char,
+    now_us: u64,
+    peak_us: u64,
+    age_us: u64,
+) -> *mut ZmSession {
+    if url.is_null() {
+        return std::ptr::null_mut();
+    }
+    let Ok(s) = CStr::from_ptr(url).to_str() else {
+        return std::ptr::null_mut();
+    };
+    match Client::open_with_memory(s, now_us, peak_us, age_us) {
+        Ok(client) => Box::into_raw(Box::new(ZmSession {
+            client,
+            held_action: None,
+            held_event: None,
+        })),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+/// # Safety
+/// `url` is a NUL-terminated string or null.
+pub unsafe extern "C" fn zm_session_open_ex(
+    url: *const std::ffi::c_char,
+    now_us: u64,
+    start_us: u64,
+    peak_us: u64,
+    age_us: u64,
+) -> *mut ZmSession {
+    if url.is_null() {
+        return std::ptr::null_mut();
+    }
+    let Ok(s) = CStr::from_ptr(url).to_str() else {
+        return std::ptr::null_mut();
+    };
+    match Client::open_with(s, now_us, start_us, peak_us, age_us) {
+        Ok(client) => Box::into_raw(Box::new(ZmSession {
+            client,
+            held_action: None,
+            held_event: None,
+        })),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_free(p: *mut ZmSession) {
+    if !p.is_null() {
+        drop(Box::from_raw(p));
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_poll_action(
+    s: *mut ZmSession,
+    now_us: u64,
+    out: *mut ZmAction,
+) -> bool {
+    if s.is_null() || out.is_null() {
+        return false;
+    }
+    let zs = &mut *s;
+    let held = loop {
+        let Some(action) = zs.client.poll_action(now_us) else {
+            zs.held_action = None;
+            return false;
+        };
+        match action {
+            broadcast_client::Action::HttpRequest {
+                conn,
+                method,
+                url,
+                headers,
+                byte_range,
+            } => {
+                let mut hs = String::new();
+                for (k, v) in &headers {
+                    hs.push_str(k);
+                    hs.push_str(": ");
+                    hs.push_str(v);
+                    hs.push('\n');
+                }
+                let (has_range, range_start, range_len) = match byte_range {
+                    Some((a, b)) => (true, a, b),
+                    None => (false, 0, 0),
+                };
+                break HeldAction {
+                    method: CString::new(method).ok(),
+                    url: CString::new(url).ok(),
+                    headers: CString::new(hs).ok(),
+                    kind: 1,
+                    conn,
+                    has_range,
+                    range_start,
+                    range_len,
+                    wake_us: 0,
+                };
+            }
+            broadcast_client::Action::Close { conn } => {
+                break HeldAction {
+                    method: None,
+                    url: None,
+                    headers: None,
+                    kind: 2,
+                    conn,
+                    has_range: false,
+                    range_start: 0,
+                    range_len: 0,
+                    wake_us: 0,
+                };
+            }
+            broadcast_client::Action::WakeAt(us) => {
+                break HeldAction {
+                    method: None,
+                    url: None,
+                    headers: None,
+                    kind: 3,
+                    conn: 0,
+                    has_range: false,
+                    range_start: 0,
+                    range_len: 0,
+                    wake_us: us,
+                };
+            }
+            _ => continue,
+        }
+    };
+    let outref = &mut *out;
+    outref.kind = held.kind;
+    outref.conn = held.conn;
+    outref.method = held.method.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
+    outref.url = held.url.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
+    outref.headers = held.headers.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
+    outref.has_range = held.has_range;
+    outref.range_start = held.range_start;
+    outref.range_len = held.range_len;
+    outref.wake_us = held.wake_us;
+    zs.held_action = Some(held);
+    true
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_poll(s: *mut ZmSession, ev: *mut ZmEvent) -> bool {
+    if s.is_null() || ev.is_null() {
+        return false;
+    }
+    let zs = &mut *s;
+    let Some(ce) = zs.client.poll_event() else {
+        zs.held_event = None;
+        return false;
+    };
+    let held = HeldEvent::new(ce);
+    let mut out = zeroed_zm_event();
+    fill_session_event(&mut out, &held);
+    zs.held_event = Some(held);
+    *ev = out;
+    true
+}
+
+fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
+    use broadcast_client::Status;
+    match &held.client_event {
+        session::ClientEvent::Media(m) => fill_demux_event(out, m),
+        session::ClientEvent::Status(s) => {
+            out.kind = 7;
+            match s {
+                Status::Establishing => out.status = 1,
+                Status::Live => out.status = 2,
+                Status::Stalled { secs } => {
+                    out.status = 3;
+                    out.status_value = *secs;
+                }
+                Status::Reconnecting { attempt } => {
+                    out.status = 4;
+                    out.status_value = *attempt;
+                }
+                Status::NotFound => out.status = 5,
+                Status::WaitingForCredentials => out.status = 6,
+                Status::Ended => out.status = 7,
+                _ => {}
+            }
+        }
+        session::ClientEvent::AuthRequired { .. } => {
+            out.kind = 8;
+            out.auth_scheme = held
+                .auth_scheme
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+            out.auth_realm = held
+                .auth_realm
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+            out.auth_origin = held
+                .auth_origin
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+            out.auth_metadata = held
+                .auth_metadata
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+        }
+        session::ClientEvent::AuthRejected(status) => {
+            out.kind = 9;
+            out.http_status = *status;
+        }
+        session::ClientEvent::Forbidden(status) => {
+            out.kind = 10;
+            out.http_status = *status;
+        }
+        session::ClientEvent::Starved { with_data } => {
+            out.kind = 11;
+            out.starved_with_data = u8::from(*with_data);
+        }
+        session::ClientEvent::Finite { expected_bytes } => {
+            out.kind = 12;
+            out.status_value = *expected_bytes;
+        }
+        session::ClientEvent::Buffer(b) => {
+            out.kind = 13;
+            match b {
+                session::Buffer::Start { at_27mhz } => {
+                    out.status = 1;
+                    out.status_value = *at_27mhz;
+                }
+                session::Buffer::Pause {
+                    hold_at_27mhz,
+                    starving_track,
+                } => {
+                    out.status = 2;
+                    out.status_value = *hold_at_27mhz;
+                    out.track_id = starving_track.unwrap_or(0);
+                }
+                session::Buffer::Resume { at_27mhz } => {
+                    out.status = 3;
+                    out.status_value = *at_27mhz;
+                }
+            }
+        }
+        session::ClientEvent::Variants { chosen, lines } => {
+            out.kind = 14;
+            out.status = *chosen as u32;
+            out.status_value = lines.len() as u64;
+            out.text = held
+                .text
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+        }
+        session::ClientEvent::Error { name: _, fatal } => {
+            out.kind = 15;
+            out.status = if *fatal { 1 } else { 0 };
+            out.text = held
+                .text
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_on_response(
+    s: *mut ZmSession,
+    conn: u32,
+    status: u16,
+    headers: *const std::ffi::c_char,
+    now_us: u64,
+) {
+    if s.is_null() {
+        return;
+    }
+    let zs = &mut *s;
+    let mut parsed: Vec<(String, String)> = Vec::new();
+    if !headers.is_null() {
+        let txt = CStr::from_ptr(headers).to_string_lossy();
+        for line in txt.split('\n') {
+            if line.trim().is_empty() {
+                continue;
+            }
+            if let Some((k, v)) = line.split_once(':') {
+                parsed.push((k.trim().to_string(), v.trim().to_string()));
+            }
+        }
+    }
+    zs.client.on_response(conn, status, &parsed, now_us);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_on_data(
+    s: *mut ZmSession,
+    conn: u32,
+    bytes: *const u8,
+    len: usize,
+    now_us: u64,
+) {
+    if s.is_null() {
+        return;
+    }
+    let zs = &mut *s;
+    let slice = if len == 0 {
+        &[] as &[u8]
+    } else if bytes.is_null() {
+        return;
+    } else {
+        std::slice::from_raw_parts(bytes, len)
+    };
+    zs.client.on_data(conn, slice, now_us);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_on_closed(
+    s: *mut ZmSession,
+    conn: u32,
+    error: *const std::ffi::c_char,
+    now_us: u64,
+) {
+    if s.is_null() {
+        return;
+    }
+    let zs = &mut *s;
+    let err = if error.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(error).to_string_lossy().into_owned())
+    };
+    zs.client.on_closed(conn, err, now_us);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_set_password(
+    s: *mut ZmSession,
+    user: *const std::ffi::c_char,
+    password: *const std::ffi::c_char,
+) -> bool {
+    if s.is_null() || user.is_null() || password.is_null() {
+        return false;
+    }
+    let zs = &mut *s;
+    let u = CStr::from_ptr(user).to_string_lossy().into_owned();
+    let p = CStr::from_ptr(password).to_string_lossy().into_owned();
+    zs.client
+        .set_credentials(broadcast_client::Credentials::new(u, p))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_set_bearer(s: *mut ZmSession, token: *const std::ffi::c_char) -> bool {
+    if s.is_null() || token.is_null() {
+        return false;
+    }
+    let zs = &mut *s;
+    let t = CStr::from_ptr(token).to_string_lossy().into_owned();
+    zs.client
+        .set_credentials(broadcast_client::Credentials::bearer(t))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_reconnect(s: *mut ZmSession, now_us: u64) {
+    if s.is_null() {
+        return;
+    }
+    (*s).client.reconnect(now_us);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_rejoin(s: *mut ZmSession, track_id: u32) {
+    if s.is_null() {
+        return;
+    }
+    (*s).client.rejoin(track_id);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_stall_memory(
+    s: *mut ZmSession,
+    peak_us: *mut u64,
+    age_us: *mut u64,
+) -> bool {
+    if s.is_null() || peak_us.is_null() || age_us.is_null() {
+        return false;
+    }
+    let (p, a) = (*s).client.stall_memory();
+    *peak_us = p;
+    *age_us = a;
+    true
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_on_playback_position(
+    s: *mut ZmSession,
+    now_us: u64,
+    has_pos: bool,
+    pts_27mhz: u64,
+) {
+    if s.is_null() {
+        return;
+    }
+    (*s).client.on_playback_position(now_us, if has_pos { Some(pts_27mhz) } else { None });
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_set_rendered_tracks(
+    s: *mut ZmSession,
+    ids: *const u32,
+    n: usize,
+) {
+    if s.is_null() {
+        return;
+    }
+    let slice = if n == 0 || ids.is_null() {
+        &[] as &[u32]
+    } else {
+        std::slice::from_raw_parts(ids, n)
+    };
+    (*s).client.set_rendered_tracks(slice);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_hint(s: *mut ZmSession, code: u32) {
+    if s.is_null() {
+        return;
+    }
+    (*s).client.hint(code);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_select_variant(s: *mut ZmSession, index: usize) -> bool {
+    if s.is_null() {
+        return false;
+    }
+    (*s).client.select_variant(index)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_close(s: *mut ZmSession) {
+    if s.is_null() {
+        return;
+    }
+    (*s).client.close();
+}
+
+#[cfg(test)]
+mod ffi_tests {
+    use super::*;
+    use std::ffi::{CStr, CString};
+
+    #[test]
+    fn session_round_trip() {
+        let url = CString::new("http://a.example/live.ts").unwrap();
+        let s = unsafe { zm_session_open(url.as_ptr(), 0) };
+        assert!(!s.is_null());
+        let mut a: ZmAction = unsafe { std::mem::zeroed() };
+        unsafe {
+            assert!(zm_session_poll_action(s, 0, &mut a));
+            assert_eq!(a.kind, 1);
+            assert_eq!(CStr::from_ptr(a.url).to_str().unwrap(), "http://a.example/live.ts");
+            assert_eq!(CStr::from_ptr(a.method).to_str().unwrap(), "GET");
+            let h = CString::new("WWW-Authenticate: Bearer realm=\"z\"\n").unwrap();
+            zm_session_on_response(s, a.conn, 401, h.as_ptr(), 0);
+            let mut e: ZmEvent = std::mem::zeroed();
+            let mut seen = false;
+            while unsafe { zm_session_poll(s, &mut e) } {
+                if e.kind == 8 {
+                    seen = true;
+                    assert_eq!(CStr::from_ptr(e.auth_scheme).to_str().unwrap(), "bearer");
+                    assert_eq!(CStr::from_ptr(e.auth_realm).to_str().unwrap(), "z");
+                }
+            }
+            assert!(seen);
+            zm_session_free(s);
+        }
+        let bad = CString::new("rtmp://x/y").unwrap();
+        assert!(unsafe { zm_session_open(bad.as_ptr(), 0) }.is_null());
+    }
+
+    #[test]
+    fn session_password_and_inputs() {
+        let url = CString::new("http://a.example/live.ts").unwrap();
+        let s = unsafe { zm_session_open(url.as_ptr(), 0) };
+        assert!(!s.is_null());
+        unsafe {
+            let mut a: ZmAction = std::mem::zeroed();
+            assert!(zm_session_poll_action(s, 0, &mut a));
+            let h = CString::new("WWW-Authenticate: Basic realm=\"tv\"\n").unwrap();
+            zm_session_on_response(s, a.conn, 401, h.as_ptr(), 0);
+            let mut e: ZmEvent = std::mem::zeroed();
+            while zm_session_poll(s, &mut e) {}
+            let u = CString::new("u").unwrap();
+            let p = CString::new("p").unwrap();
+            zm_session_set_password(s, u.as_ptr(), p.as_ptr());
+            while !(zm_session_poll_action(s, 0, &mut a) && a.kind == 1) {}
+            let headers = if a.headers.is_null() { "" } else { CStr::from_ptr(a.headers).to_str().unwrap() };
+            assert!(headers.to_lowercase().contains("authorization: basic"));
+            let ids = [1u32];
+            zm_session_set_rendered_tracks(s, ids.as_ptr(), ids.len());
+            zm_session_on_playback_position(s, 0, false, 0);
+            zm_session_hint(s, 1);
+            zm_session_free(s);
+        }
     }
 }

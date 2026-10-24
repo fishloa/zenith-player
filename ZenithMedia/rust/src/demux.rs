@@ -2,7 +2,7 @@
 //! every field comes from transmux (codec config, timing, RAP detection).
 
 use broadcast_common::Serialize;
-use transmux::ir::{CodecConfig, DemuxEvent, DisplayGeometry, DisplayInfo, TrackSpec};
+use transmux::ir::{CodecConfig, DemuxEvent, DisplayGeometry, DisplayInfo, Sample, TrackSpec};
 use transmux::{
     access_unit_is_rap, video_picture_facts, DropReason, JoinDecision, LiveJoin, NalCodec, StreamingTsDemux,
     VideoScan,
@@ -137,14 +137,18 @@ pub enum Event {
     },
 }
 
-pub struct Demux {
-    inner: StreamingTsDemux,
+pub struct Converter {
     codecs: std::collections::HashMap<u32, Codec>,
     configs: std::collections::HashMap<u32, CodecConfig>,
     joins: std::collections::HashMap<u32, LiveJoin>,
     /// Display geometry announced by the last DisplayChanged of each video
     /// track (transmux DisplayInfo), until its TrackUpdated carries it.
     geometries: std::collections::HashMap<u32, DisplayGeometry>,
+}
+
+pub struct Demux {
+    inner: StreamingTsDemux,
+    conv: Converter,
     /// Newest PCR seen (27 MHz), for the live-buffer jitter estimator.
     last_pcr_27mhz: Option<u64>,
 }
@@ -159,10 +163,7 @@ impl Demux {
     pub fn new() -> Self {
         Demux {
             inner: StreamingTsDemux::new(),
-            codecs: Default::default(),
-            configs: Default::default(),
-            joins: Default::default(),
-            geometries: Default::default(),
+            conv: Converter::new(),
             last_pcr_27mhz: None,
         }
     }
@@ -175,9 +176,7 @@ impl Demux {
     /// Restart the live join on a video track (after a decoder reset or a
     /// discontinuity): samples are dropped again until the next join point.
     pub fn rejoin(&mut self, track_id: u32) {
-        if let Some(j) = self.joins.get_mut(&track_id) {
-            j.rejoin();
-        }
+        self.conv.rejoin(track_id);
     }
 
     /// The newest PCR seen since the last call, in 27 MHz ticks (taken: a
@@ -197,60 +196,14 @@ impl Demux {
 
     fn convert(&mut self, ev: DemuxEvent) -> Option<Event> {
         match ev {
-            DemuxEvent::TrackAdded(spec) => {
-                let t = track_info(&spec)?;
-                self.remember(&spec, &t);
-                Some(Event::TrackAdded(t))
-            }
-            DemuxEvent::TrackUpdated(spec) => {
-                let t = track_info(&spec)?;
-                self.remember(&spec, &t);
-                Some(Event::TrackUpdated(t))
-            }
+            DemuxEvent::TrackAdded(spec) => self.conv.track(&spec).map(Event::TrackAdded),
+            DemuxEvent::TrackUpdated(spec) => self.conv.track(&spec).map(Event::TrackUpdated),
             DemuxEvent::TrackRemoved { track_id, .. } => {
-                let track_id = track_id.value();
-                self.codecs.remove(&track_id);
-                self.geometries.remove(&track_id);
-                Some(Event::TrackRemoved(track_id))
+                self.conv.removed(track_id.value());
+                Some(Event::TrackRemoved(track_id.value()))
             }
-            DemuxEvent::DisplayChanged { track_id, pts, .. } => {
-                let track_id = track_id.value();
-                let sample_pts = pts;
-                let geometry = self.geometries.get(&track_id).map(geometry_of_geometry);
-                Some(Event::DisplayChanged { track_id, pts: sample_pts, geometry })
-            }
-            DemuxEvent::Sample { track_id, sample, .. } => {
-                let track_id = track_id.value();
-                let codec = *self.codecs.get(&track_id).unwrap_or(&Codec::Other);
-                let is_rap = match codec {
-                    Codec::H264 => access_unit_is_rap(NalCodec::Avc, &sample.data, true),
-                    Codec::Hevc => access_unit_is_rap(NalCodec::Hevc, &sample.data, true),
-                    _ => true,
-                };
-                let pts = sample.pts.or(sample.dts)?;
-                let join = match self.joins.get_mut(&track_id).map(|j| j.push(&sample)) {
-                    None | Some(JoinDecision::Keep) => Join::Keep,
-                    Some(JoinDecision::JoinPoint(_)) => Join::JoinPoint,
-                    Some(JoinDecision::Drop(DropReason::LeadingPicture)) => Join::DropLeading,
-                    Some(JoinDecision::Drop(DropReason::NotSelfContained)) => Join::DropNotSelfContained,
-                    Some(JoinDecision::Drop(_)) => Join::DropBeforeRap,
-                    Some(_) => Join::Keep,
-                };
-                let facts = self.configs.get(&track_id).and_then(|c| video_picture_facts(c, &sample.data));
-                Some(Event::Sample(SampleOut {
-                    track_id,
-                    pts,
-                    dts: sample.dts.unwrap_or(pts),
-                    duration: sample.duration.unwrap_or(0),
-                    is_sync: sample.flags.is_sync,
-                    is_rap,
-                    join,
-                    fields: facts.map_or(0, |f| f.fields),
-                    bottom_field_first: facts.and_then(|f| f.bottom_field_first),
-                    data: sample.data.to_vec(),
-                    geometry: Some(geometry_of(sample.display.as_deref())),
-                }))
-            }
+            DemuxEvent::DisplayChanged { track_id, pts, .. } => Some(self.conv.display_changed(track_id.value(), pts, None)),
+            DemuxEvent::Sample { track_id, sample, .. } => self.conv.sample(track_id.value(), &sample, None).map(Event::Sample),
             DemuxEvent::Discontinuity { track, .. } => Some(Event::Discontinuity(track.map(|t| t.value()))),
             DemuxEvent::ClockReference { ticks, clock_hz, .. } => {
                 if clock_hz > 0 {
@@ -263,7 +216,77 @@ impl Demux {
     }
 }
 
-impl Demux {
+impl Converter {
+    pub fn new() -> Self {
+        Converter {
+            codecs: Default::default(),
+            configs: Default::default(),
+            joins: Default::default(),
+            geometries: Default::default(),
+        }
+    }
+    pub fn track(&mut self, spec: &TrackSpec) -> Option<TrackInfo> {
+        let t = track_info(spec)?;
+        self.remember(spec, &t);
+        Some(t)
+    }
+    pub fn removed(&mut self, track_id: u32) {
+        self.codecs.remove(&track_id);
+        self.geometries.remove(&track_id);
+    }
+    pub fn sample(&mut self, track_id: u32, sample: &Sample, join: Option<transmux::JoinDecision>) -> Option<SampleOut> {
+        let codec = *self.codecs.get(&track_id).unwrap_or(&Codec::Other);
+        let is_rap = match codec {
+            Codec::H264 => access_unit_is_rap(NalCodec::Avc, &sample.data, true),
+            Codec::Hevc => access_unit_is_rap(NalCodec::Hevc, &sample.data, true),
+            _ => true,
+        };
+        let pts = sample.pts.or(sample.dts)?;
+        let join = match join {
+            Some(j) => match j {
+                JoinDecision::Keep => Join::Keep,
+                JoinDecision::JoinPoint(_) => Join::JoinPoint,
+                JoinDecision::Drop(DropReason::LeadingPicture) => Join::DropLeading,
+                JoinDecision::Drop(DropReason::NotSelfContained) => Join::DropNotSelfContained,
+                JoinDecision::Drop(_) => Join::DropBeforeRap,
+                _ => Join::Keep,
+            },
+            None => match self.joins.get_mut(&track_id).map(|j| j.push(sample)) {
+                None | Some(JoinDecision::Keep) => Join::Keep,
+                Some(JoinDecision::JoinPoint(_)) => Join::JoinPoint,
+                Some(JoinDecision::Drop(DropReason::LeadingPicture)) => Join::DropLeading,
+                Some(JoinDecision::Drop(DropReason::NotSelfContained)) => Join::DropNotSelfContained,
+                Some(JoinDecision::Drop(_)) => Join::DropBeforeRap,
+                Some(_) => Join::Keep,
+            },
+        };
+        let facts = self.configs.get(&track_id).and_then(|c| video_picture_facts(c, &sample.data));
+        Some(SampleOut {
+            track_id,
+            pts,
+            dts: sample.dts.unwrap_or(pts),
+            duration: sample.duration.unwrap_or(0),
+            is_sync: sample.flags.is_sync,
+            is_rap,
+            join,
+            fields: facts.map_or(0, |f| f.fields),
+            bottom_field_first: facts.and_then(|f| f.bottom_field_first),
+            data: sample.data.to_vec(),
+            geometry: Some(geometry_of(sample.display.as_deref())),
+        })
+    }
+    pub fn display_changed(&mut self, track_id: u32, pts: Option<i64>, display: Option<&DisplayGeometry>) -> Event {
+        if let Some(g) = display {
+            self.geometries.insert(track_id, g.clone());
+        }
+        let geometry = self.geometries.get(&track_id).map(geometry_of_geometry);
+        Event::DisplayChanged { track_id, pts, geometry }
+    }
+    pub fn rejoin(&mut self, track_id: u32) {
+        if let Some(j) = self.joins.get_mut(&track_id) {
+            j.rejoin();
+        }
+    }
     fn remember(&mut self, spec: &TrackSpec, t: &TrackInfo) {
         self.codecs.insert(t.track_id, t.codec);
         match spec.display.clone() {

@@ -128,6 +128,22 @@ struct PlayerView: View {
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
+            case .needsCredentials(let host):
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.secondary)
+                    Text("Sign in to \(host) in Settings")
+                        .font(.headline)
+                }
+            case .forbidden:
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.secondary)
+                    Text("This channel is not available.")
+                        .font(.headline)
+                }
             case .failed:
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
@@ -179,7 +195,7 @@ struct PlayerView: View {
             }
             let url = currentChannel.streamURL
             print("[PlayerView] play \(currentChannel.name)")
-            player.play { HTTPByteSource(url: url) }
+            player.play(url: url, credential: AuthorizedFetcher.streamCredential(for: url))
         }
         .onAppear {
             #if os(iOS) || os(tvOS)
@@ -221,7 +237,7 @@ struct PlayerView: View {
                 // full screen's own channel, shared player or not.
                 if player.phase == .loading {
                     let url = currentChannel.streamURL
-                    player.play { HTTPByteSource(url: url) }
+                    player.play(url: url, credential: AuthorizedFetcher.streamCredential(for: url))
                 }
             default: break
             }

@@ -5,13 +5,20 @@
 #include <stdint.h>
 
 // Mirrors ZenithMedia/rust/src/lib.rs. Event payload pointers stay valid
-// until the next zm_demux_poll / zm_demux_free on the same handle.
+// until the next zm_demux_poll / zm_demux_free on the same handle, and
+// session action/event pointers stay valid until the next
+// zm_session_poll_action / zm_session_poll (respectively) or
+// zm_session_free on the same handle. Handles are not thread-safe.
 typedef struct zm_demux zm_demux;
 typedef struct zm_mpa zm_mpa;
+typedef struct zm_session zm_session;
 
 enum { ZM_EV_NONE = 0, ZM_EV_TRACK_ADDED = 1, ZM_EV_TRACK_UPDATED = 2,
        ZM_EV_TRACK_REMOVED = 3, ZM_EV_SAMPLE = 4, ZM_EV_DISCONTINUITY = 5,
        ZM_EV_DISPLAY_CHANGED = 6 };
+enum { ZM_EV_STATUS = 7, ZM_EV_AUTH_REQUIRED = 8, ZM_EV_AUTH_REJECTED = 9,
+       ZM_EV_FORBIDDEN = 10, ZM_EV_STARVED = 11, ZM_EV_FINITE = 12,
+       ZM_EV_BUFFER = 13, ZM_EV_VARIANTS = 14, ZM_EV_ERROR = 15 };
 
 typedef struct {
     uint32_t kind;
@@ -41,6 +48,16 @@ typedef struct {
     // unit's state (0 = not signalled). Wire H.264/H.265 code points.
     uint8_t colour_primaries, colour_transfer, colour_matrix;
     uint8_t full_range;   // 1 = signalled full range
+    // session events
+    uint32_t status;
+    uint64_t status_value;
+    uint16_t http_status;
+    uint8_t starved_with_data;
+    const char *auth_scheme;
+    const char *auth_realm;
+    const char *auth_origin;
+    const char *auth_metadata;
+    const char *text;
 } zm_event;
 
 zm_demux *zm_demux_new(void);
@@ -55,43 +72,40 @@ void zm_mpa_free(zm_mpa *m);
 ptrdiff_t zm_mpa_decode(zm_mpa *m, const uint8_t *frame, size_t len, int16_t *out, size_t cap,
                         uint32_t *channels, uint32_t *rate, uint32_t labels[8]);
 
-/* ---- live-buffer (rust-broadcast, ABI v2): playout buffer controller ---- */
-typedef struct zm_live_buffer zm_live_buffer;
+/* ---- session (broadcast-client) ---- */
+enum { ZM_ACT_NONE = 0, ZM_ACT_HTTP = 1, ZM_ACT_CLOSE = 2, ZM_ACT_WAKE = 3 };
 
-/* live-buffer EventRecord, ABI v2 (40 bytes). kind: 1 start playing,
-   2 pause, 3 resume, 4 target changed, 5 over max, 6 rebaselined,
-   7 events dropped. Positions are PTS-domain 27 MHz ticks. */
 typedef struct {
     uint32_t kind;
-    uint32_t reason;
-    uint64_t media_27mhz;
-    uint64_t a_us;
-    uint64_t b_us;
-    uint32_t track;
-    uint32_t track_valid;
-} zm_lb_event;
+    uint32_t conn;
+    const char *method;
+    const char *url;
+    const char *headers;
+    bool has_range;
+    uint64_t range_start, range_len;
+    uint64_t wake_us;
+} zm_action;
 
-typedef struct {
-    uint32_t state;      /* 0 buffering, 1 playing, 2 starved */
-    int64_t  lead_us;
-    uint64_t target_us;
-    uint32_t stalls;
-    uint32_t limiting_track;
-    uint32_t limiting_valid;
-} zm_lb_stats;
-
-zm_live_buffer *zm_lb_new(uint64_t initial_us, uint64_t seed_peak_us, uint64_t seed_age_us);
-void zm_lb_free(zm_live_buffer *p);
-void zm_lb_on_chunk(zm_live_buffer *p, uint64_t arrival_us, uint32_t bytes, bool has_pcr, uint64_t pcr_27mhz);
-void zm_lb_register_track(zm_live_buffer *p, uint32_t track);
-void zm_lb_unregister_track(zm_live_buffer *p, uint32_t track);
-void zm_lb_on_track_media(zm_live_buffer *p, uint64_t now_us, uint32_t track, uint64_t media_end_27mhz);
-void zm_lb_on_tick(zm_live_buffer *p, uint64_t now_us, bool has_pos, uint64_t playback_27mhz);
-bool zm_lb_on_hint(zm_live_buffer *p, uint64_t now_us, uint32_t hint);
-bool zm_lb_poll(zm_live_buffer *p, zm_lb_event *out);
-bool zm_lb_get_stats(zm_live_buffer *p, zm_lb_stats *out);
-bool zm_lb_snapshot(zm_live_buffer *p, uint64_t *peak_us, uint64_t *age_us);
-
+zm_session *zm_session_open(const char *url, uint64_t now_us);
+zm_session *zm_session_open_with_memory(const char *url, uint64_t now_us, uint64_t peak_us, uint64_t age_us);
+/* start_us: cold-start buffer target (0 = default); peak_us/age_us: stall memory (0 = none) */
+zm_session *zm_session_open_ex(const char *url, uint64_t now_us, uint64_t start_us, uint64_t peak_us, uint64_t age_us);
+void zm_session_free(zm_session *s);
+void zm_session_close(zm_session *s);
+bool zm_session_poll_action(zm_session *s, uint64_t now_us, zm_action *out);
+bool zm_session_poll(zm_session *s, zm_event *out);
+void zm_session_on_response(zm_session *s, uint32_t conn, uint16_t status, const char *headers, uint64_t now_us);
+void zm_session_on_data(zm_session *s, uint32_t conn, const uint8_t *bytes, size_t len, uint64_t now_us);
+void zm_session_on_closed(zm_session *s, uint32_t conn, const char *error, uint64_t now_us);
+bool zm_session_set_password(zm_session *s, const char *user, const char *password);
+bool zm_session_set_bearer(zm_session *s, const char *token);
+void zm_session_reconnect(zm_session *s, uint64_t now_us);
+void zm_session_rejoin(zm_session *s, uint32_t track_id);
+bool zm_session_stall_memory(zm_session *s, uint64_t *peak_us, uint64_t *age_us);
+void zm_session_on_playback_position(zm_session *s, uint64_t now_us, bool has_pos, uint64_t pts_27mhz);
+void zm_session_set_rendered_tracks(zm_session *s, const uint32_t *ids, size_t n);
+void zm_session_hint(zm_session *s, uint32_t code);
+bool zm_session_select_variant(zm_session *s, size_t index);
 /* Newest PCR seen by the demuxer since the last call (27 MHz ticks). */
 bool zm_demux_take_pcr(zm_demux *p, uint64_t *out);
 

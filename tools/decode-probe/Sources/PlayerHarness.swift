@@ -68,13 +68,9 @@ enum LiveSoak {
             let id = url.lastPathComponent
             let m0 = await PlayerHarness.renderer.displayMetrics()
             let c = PlayerController(renderer: PlayerHarness.renderer)
-            // -trace: per-chunk arrival log + phase changes (Library/Caches/traces).
+            // -trace: phase changes (Library/Caches/traces).
             let trace = args.contains("-trace") ? ArrivalTrace(id: id) : nil
-            if let trace { c.liveBufferLog = { trace.liveBuffer($0) } }
-            c.play { () -> ByteSource in
-                let http = HTTPByteSource(url: url)
-                return trace.map { TracingByteSource(inner: http, trace: $0) } ?? http
-            }
+            c.play(url: url)
             var bufferingEpisodes = 0, wasBuffering = false, maxReconnect = 0
             var lastPhase = ""
             let t0 = Date()
