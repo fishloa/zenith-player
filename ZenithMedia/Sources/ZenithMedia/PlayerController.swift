@@ -219,10 +219,10 @@ public final class PlayerController {
     /// The decode window allows this many frames beyond decodeAhead, and at
     /// most this many arrivals past it are skipped in a row (a backlog far
     /// beyond decodeAhead is worked off, not skipped wholesale).
-    static let decodeAheadToleranceFrames = 3
-    static let decodeAheadJumpFrames = 4
+    nonisolated static let decodeAheadToleranceFrames = 3
+    nonisolated static let decodeAheadJumpFrames = 4
     /// Frame rate the jump margin is measured at (the fastest broadcast rate).
-    static let decodeAheadNominalFPS = 50.0
+    nonisolated static let decodeAheadNominalFPS = 50.0
 
     /// Interlaced unless transmux says the coding is progressive (R3).
     public nonisolated static func codedInterlaced(_ t: TrackInfo) -> Bool {

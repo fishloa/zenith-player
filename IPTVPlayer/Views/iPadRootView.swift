@@ -153,6 +153,14 @@ struct iPadRootView: View {
             SignInView(request: request, settingsStore: settingsStore) {
                 Task { await playlistService.loadPlaylist() }
             }
+        } else if let request = epgService.signIn {
+            SignInView(request: request, settingsStore: settingsStore) {
+                Task {
+                    if let url = playlistService.guideURL {
+                        await epgService.load(from: url)
+                    }
+                }
+            }
         } else if playlistService.needsSetup {
             SetupView(settingsStore: settingsStore)
         } else if let error = playlistService.errorMessage, playlistService.channels.isEmpty {

@@ -237,7 +237,7 @@ public final class Renderer: @unchecked Sendable {
 
     /// Frames the display layer has shown and dropped (missed their display
     /// deadline) since it was created, from AVVideoPerformanceMetrics.
-    public func displayMetrics() async -> (total: Int, dropped: Int)? {
+    @MainActor public func displayMetrics() async -> (total: Int, dropped: Int)? {
         guard #available(macOS 14.4, iOS 17.4, tvOS 17.4, *),
               let m = await displayLayer.sampleBufferRenderer.videoPerformanceMetrics else { return nil }
         return (m.totalNumberOfFrames, m.numberOfDroppedFrames)

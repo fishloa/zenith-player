@@ -21,8 +21,7 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
         self.onData = onData
         self.onClosed = onClosed
         let cfg = URLSessionConfiguration.ephemeral
-        cfg.httpShouldSetCookies = false
-        cfg.httpCookieStorage = nil
+        cfg.httpCookieAcceptPolicy = .always
         cfg.urlCache = nil
         cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
         cfg.urlCredentialStorage = nil
@@ -77,11 +76,7 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
         }
         if let http = response as? HTTPURLResponse {
             if !reported.contains(conn) {
-                var headers: [(String, String)] = []
-                for (k, v) in http.allHeaderFields {
-                    headers.append((String(describing: k), String(describing: v)))
-                }
-                onResponse(conn, http.statusCode, headers)
+                onResponse(conn, http.statusCode, Self.sessionHeaders(http))
                 reported.insert(conn)
             }
         }
@@ -116,16 +111,19 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
            let conn = conn(for: dataTask),
            let http = challenge.failureResponse as? HTTPURLResponse {
             if !reported.contains(conn) {
-                var headers: [(String, String)] = []
-                for (k, v) in http.allHeaderFields {
-                    headers.append((String(describing: k), String(describing: v)))
-                }
-                onResponse(conn, http.statusCode, headers)
+                onResponse(conn, http.statusCode, Self.sessionHeaders(http))
                 reported.insert(conn)
             }
             endedByChallenge.insert(conn)
         }
         if let dataTask = task as? URLSessionDataTask { dataTask.cancel() }
         completionHandler(.cancelAuthenticationChallenge, nil)
+    }
+
+    private static func sessionHeaders(_ http: HTTPURLResponse) -> [(String, String)] {
+        http.allHeaderFields.compactMap { k, v in
+            let name = String(describing: k)
+            return name.lowercased() == "set-cookie" ? nil : (name, String(describing: v))
+        }
     }
 }

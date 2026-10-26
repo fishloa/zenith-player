@@ -1,6 +1,7 @@
 import Foundation
 
-final class ByteSourceTransport: Transport {
+// State is only touched on `queue`.
+final class ByteSourceTransport: Transport, @unchecked Sendable {
     private let queue: DispatchQueue
     private let make: () -> ByteSource
     private let onResponse: (UInt32, Int, [(String, String)]) -> Void

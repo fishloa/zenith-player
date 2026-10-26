@@ -67,6 +67,30 @@ final class ImageCacheTests: XCTestCase {
         XCTAssertNotNil(retrieved, "10×10 image must survive cache round-trip")
     }
 
+    func testDiskCacheRoundTripAcrossInstances() async {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let url = URL(string: "https://example.com/disk.png")!
+        let cache1 = ImageCache(directory: dir)
+        await cache1.store(makeImage(), for: url)
+        let cache2 = ImageCache(directory: dir)
+        let retrieved = await cache2.image(for: url)
+        XCTAssertNotNil(retrieved, "Image stored in one instance must load from a new instance on same directory")
+    }
+
+    func testOldDiskEntryIgnored() async {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let url = URL(string: "https://example.com/old.png")!
+        let cache1 = ImageCache(directory: dir)
+        await cache1.store(makeImage(), for: url)
+        let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        for f in files {
+            try? FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(-8 * 24 * 60 * 60)], ofItemAtPath: f.path)
+        }
+        let cache2 = ImageCache(directory: dir)
+        let retrieved = await cache2.image(for: url)
+        XCTAssertNil(retrieved, "Entries older than 7 days must be ignored")
+    }
+
     // MARK: - Helpers
     private func makeImage(size: CGSize = CGSize(width: 1, height: 1)) -> UIImage {
         let renderer = UIGraphicsImageRenderer(size: size)

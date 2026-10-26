@@ -16,6 +16,8 @@ final class EPGService {
     /// When the last successful fetch completed.
     private(set) var lastFetchDate: Date?
 
+    private(set) var signIn: SignInRequest?
+
     private let fetcher: AuthorizedFetcher
 
     /// The URL currently being auto-refreshed.
@@ -88,7 +90,10 @@ final class EPGService {
             for event in events { grouped[event.serviceSlug, default: []].append(event) }
             eventsBySlug = grouped
             lastFetchDate = .now
+            signIn = nil
             print("[EPG] loaded \(events.count) events for \(grouped.count) channels")
+        } catch FetchError.unauthorized(let challenge, let origin, let rejected) {
+            signIn = SignInRequest(origin: origin, challenge: challenge, rejected: rejected)
         } catch {
             // eventsBySlug intentionally left unchanged on failure —
             // preserves the last successful fetch until the next load succeeds.

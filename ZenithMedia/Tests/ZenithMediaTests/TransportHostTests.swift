@@ -40,6 +40,23 @@ final class TransportHostTests: XCTestCase {
         XCTAssertEqual(s.requests.first?.headers["x-a"], "1")
     }
 
+    func testCookiesAreKeptByTheHostNotPassedOn() async throws {
+        let s = try LoopbackHTTPServer { r in
+            r.path == "/a"
+                ? TestResponse(status: 302, headers: ["Location": "/b", "Set-Cookie": "sid=abc; Path=/; Expires=Wed, 21 Oct 2037 07:28:00 GMT"])
+                : TestResponse(status: 200)
+        }
+        defer { s.stop() }
+        let log = Log(); let h = host(log)
+        let base = try await s.baseURL()
+        h.start(conn: 1, method: "GET", url: base.appendingPathComponent("a"), headers: [], range: nil)
+        try await waitClosed(log, 1)
+        XCTAssertFalse(log.responses.first?.2.contains { $0.0.lowercased() == "set-cookie" } ?? true)
+        h.start(conn: 2, method: "GET", url: base.appendingPathComponent("b"), headers: [], range: nil)
+        try await waitClosed(log, 2)
+        XCTAssertEqual(s.requests.last?.headers["cookie"], "sid=abc")
+    }
+
     func testRedirectIsNotFollowed() async throws {
         let s = try LoopbackHTTPServer { r in
             r.path == "/a" ? TestResponse(status: 302, headers: ["Location": "/b"]) : TestResponse(status: 200)
@@ -87,15 +104,16 @@ final class TransportHostTests: XCTestCase {
         XCTAssertEqual(s.requests.first?.headers["range"], "bytes=100-199")
     }
 
-    func testNoCookiesStored() async throws {
+    func testCookiesAreNotSharedBetweenHosts() async throws {
         let s = try LoopbackHTTPServer { _ in TestResponse(status: 200, headers: ["Set-Cookie": "a=1; Path=/"]) }
         defer { s.stop() }
-        let log = Log(); let h = host(log)
         let base = try await s.baseURL()
-        h.start(conn: 1, method: "GET", url: base.appendingPathComponent("one"), headers: [], range: nil)
-        try await waitClosed(log, 1)
-        h.start(conn: 2, method: "GET", url: base.appendingPathComponent("two"), headers: [], range: nil)
-        try await waitClosed(log, 2)
+        let log1 = Log(); let h1 = host(log1)
+        h1.start(conn: 1, method: "GET", url: base.appendingPathComponent("one"), headers: [], range: nil)
+        try await waitClosed(log1, 1)
+        let log2 = Log(); let h2 = host(log2)
+        h2.start(conn: 1, method: "GET", url: base.appendingPathComponent("two"), headers: [], range: nil)
+        try await waitClosed(log2, 1)
         XCTAssertEqual(s.requests.count, 2)
         XCTAssertNil(s.requests[1].headers["cookie"])
     }

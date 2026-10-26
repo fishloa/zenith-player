@@ -334,7 +334,7 @@ mod tests {
         let samples = |v: &[Event], id: u32| v.iter().filter(|e| matches!(e, Event::Sample(s) if s.track_id == id)).count();
         for id in added(&old) {
             let (a, b) = (samples(&old, id), samples(&new, id));
-            assert!(a.abs_diff(b) <= 2, "track {id}: demux {a} samples, session {b}");
+            assert_eq!(a, b, "track {id}: demux {a} samples, session {b}");
         }
     }
 

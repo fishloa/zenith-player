@@ -268,7 +268,7 @@ public final class Upscaler: @unchecked Sendable {
         guard let enc = cmd.makeComputeCommandEncoder() else { return }
         enc.setComputePipelineState(fn)
         for (i, t) in textures.enumerated() { enc.setTexture(t, index: i) }
-        enc.setBytes(&params, length: MemoryLayout<T>.stride, index: 0)
+        withUnsafeBytes(of: &params) { enc.setBytes($0.baseAddress!, length: MemoryLayout<T>.stride, index: 0) }
         let tg = MTLSize(width: 16, height: 16, depth: 1)
         enc.dispatchThreadgroups(MTLSize(width: (size.0 + 15) / 16, height: (size.1 + 15) / 16, depth: 1),
                                  threadsPerThreadgroup: tg)

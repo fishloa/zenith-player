@@ -41,8 +41,7 @@ struct RemoteImageView: View {
 
         do {
             let (data, response) = try await AuthorizedFetcher.shared.data(from: url)
-            let contentType = (response as? HTTPURLResponse)?
-                .value(forHTTPHeaderField: "Content-Type") ?? ""
+            let contentType = response.value(forHTTPHeaderField: "Content-Type") ?? ""
             let isSVG = contentType.contains("svg") || url.pathExtension.lowercased() == "svg"
 
             if isSVG, let rasterized = rasterizeSVG(data: data) {
@@ -62,7 +61,7 @@ struct RemoteImageView: View {
 
     private func rasterizeSVG(data: Data) -> PlatformImage? {
         guard let svg = SVGKImage(data: data) else { return nil }
-        let svgSize = svg.size ?? .zero
+        let svgSize = svg.size
         guard svgSize.width > 0, svgSize.height > 0 else { return nil }
 
         let maxWidth: CGFloat = 512

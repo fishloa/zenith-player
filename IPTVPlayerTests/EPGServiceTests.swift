@@ -125,4 +125,25 @@ final class EPGServiceTests: XCTestCase {
         let service = EPGService()
         XCTAssertTrue(service.upcomingEvents(for: nil as String?).isEmpty)
     }
+
+    func testSignInOnUnauthorizedAndClearsOnSuccess() async throws {
+        final class Gate: @unchecked Sendable { var open = false; let lock = NSLock() }
+        let gate = Gate()
+        let server = try TestHTTPServer { _ in
+            gate.lock.lock(); let open = gate.open; gate.lock.unlock()
+            if !open {
+                return TestResponse(status: 401, headers: ["WWW-Authenticate": #"Basic realm="tv""#])
+            }
+            return TestResponse(status: 200, body: Data("<tv></tv>".utf8))
+        }
+        defer { server.stop() }
+        let base = try await server.baseURL()
+        let url = base.appendingPathComponent("guide.xml")
+        let service = EPGService(fetcher: AuthorizedFetcher(credentials: CredentialStore(secrets: InMemorySecretStore())))
+        await service.load(from: url)
+        XCTAssertEqual(service.signIn?.origin, Origin(url))
+        gate.lock.lock(); gate.open = true; gate.lock.unlock()
+        await service.load(from: url)
+        XCTAssertNil(service.signIn)
+    }
 }

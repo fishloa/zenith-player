@@ -35,8 +35,10 @@ public final class VideoDecoder: VideoDecoding {
         defer { sessionLock.unlock() }
         guard !invalidated else { return lastUsingHardware }
         var v: CFBoolean?
-        VTSessionCopyProperty(session, key: kVTDecompressionPropertyKey_UsingHardwareAcceleratedVideoDecoder,
-                              allocator: nil, valueOut: &v)
+        withUnsafeMutablePointer(to: &v) {
+            _ = VTSessionCopyProperty(session, key: kVTDecompressionPropertyKey_UsingHardwareAcceleratedVideoDecoder,
+                                      allocator: nil, valueOut: $0)
+        }
         lastUsingHardware = v.map { CFBooleanGetValue($0) } ?? false
         return lastUsingHardware
     }
