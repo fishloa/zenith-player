@@ -133,6 +133,17 @@ public final class ClientSource: @unchecked Sendable {
         return queue.sync(execute: read)
     }
 
+    public var bufferStats: (stalls: Int, reprimes: Int, discontinuities: Int, longestFreeze: Double)? {
+        let read: () -> (stalls: Int, reprimes: Int, discontinuities: Int, longestFreeze: Double)? = { [weak self] in
+            guard let self, !self.closed else { return nil }
+            return self.session.bufferStats()
+        }
+        if DispatchQueue.getSpecific(key: Self.queueKey) != nil {
+            return read()
+        }
+        return queue.sync(execute: read)
+    }
+
     public func reconnect() {
         queue.async { [weak self] in
             guard let self, !self.closed else { return }

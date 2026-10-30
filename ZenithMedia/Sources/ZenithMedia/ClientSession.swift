@@ -5,9 +5,31 @@ public enum SessionStatus: Equatable, Sendable {
     case establishing, live, stalled(seconds: Int), reconnecting(attempt: Int), notFound, waitingForCredentials, ended
 }
 
+public enum PauseReason: Sendable, Equatable {
+    case unknown, noData, dataArriving, discontinuity, reprime
+    public var name: String {
+        switch self {
+        case .unknown: return "unknown"
+        case .noData: return "no_data"
+        case .dataArriving: return "data_arriving"
+        case .discontinuity: return "discontinuity"
+        case .reprime: return "reprime"
+        }
+    }
+    public init(code: UInt8) {
+        switch code {
+        case 1: self = .noData
+        case 2: self = .dataArriving
+        case 3: self = .discontinuity
+        case 4: self = .reprime
+        default: self = .unknown
+        }
+    }
+}
+
 public enum BufferEvent: Equatable, Sendable {
     case start(at27MHz: UInt64)
-    case pause(holdAt27MHz: UInt64, starvingTrack: UInt32?)
+    case pause(holdAt27MHz: UInt64, starvingTrack: UInt32?, reason: PauseReason)
     case resume(at27MHz: UInt64)
 }
 
@@ -199,7 +221,13 @@ final class ZMSession {
         return (peak, age)
     }
 
-    private func clientEvent(from ev: zm_event) -> ClientEvent? {
+    func bufferStats() -> (stalls: Int, reprimes: Int, discontinuities: Int, longestFreeze: Double) {
+        var s = zm_buffer_stats()
+        zm_session_buffer_stats(handle, &s)
+        return (stalls: Int(s.stalls), reprimes: Int(s.reprimes), discontinuities: Int(s.discontinuities), longestFreeze: Double(s.longest_freeze_us) / 1e6)
+    }
+
+    func clientEvent(from ev: zm_event) -> ClientEvent? {
         if ev.kind <= 6 {
             if let de = demuxEvent(from: ev) { return .media(de) }
             return nil
@@ -235,7 +263,7 @@ final class ZMSession {
         case UInt32(ZM_EV_BUFFER):
             switch ev.status {
             case 1: return .buffer(.start(at27MHz: ev.status_value))
-            case 2: return .buffer(.pause(holdAt27MHz: ev.status_value, starvingTrack: ev.track_id == 0 ? nil : ev.track_id))
+            case 2: return .buffer(.pause(holdAt27MHz: ev.status_value, starvingTrack: ev.track_id == 0 ? nil : ev.track_id, reason: PauseReason(code: UInt8(ev.pause_reason))))
             case 3: return .buffer(.resume(at27MHz: ev.status_value))
             default: return nil
             }

@@ -53,6 +53,7 @@ typedef struct {
     uint64_t status_value;
     uint16_t http_status;
     uint8_t starved_with_data;
+    uint8_t pause_reason;
     const char *auth_scheme;
     const char *auth_realm;
     const char *auth_origin;
@@ -102,6 +103,8 @@ bool zm_session_set_bearer(zm_session *s, const char *token);
 void zm_session_reconnect(zm_session *s, uint64_t now_us);
 void zm_session_rejoin(zm_session *s, uint32_t track_id);
 bool zm_session_stall_memory(zm_session *s, uint64_t *peak_us, uint64_t *age_us);
+typedef struct { uint32_t stalls, reprimes, discontinuities; uint64_t longest_freeze_us; } zm_buffer_stats;
+void zm_session_buffer_stats(zm_session *s, zm_buffer_stats *out);
 void zm_session_on_playback_position(zm_session *s, uint64_t now_us, bool has_pos, uint64_t pts_27mhz);
 void zm_session_set_rendered_tracks(zm_session *s, const uint32_t *ids, size_t n);
 void zm_session_hint(zm_session *s, uint32_t code);

@@ -53,11 +53,20 @@ pub struct ZmEvent {
     pub status_value: u64,
     pub http_status: u16,
     pub starved_with_data: u8,
+    pub pause_reason: u8,
     pub auth_scheme: *const std::ffi::c_char,
     pub auth_realm: *const std::ffi::c_char,
     pub auth_origin: *const std::ffi::c_char,
     pub auth_metadata: *const std::ffi::c_char,
     pub text: *const std::ffi::c_char,
+}
+
+#[repr(C)]
+pub struct ZmBufferStats {
+    pub stalls: u32,
+    pub reprimes: u32,
+    pub discontinuities: u32,
+    pub longest_freeze_us: u64,
 }
 
 pub struct ZmDemux {
@@ -138,7 +147,7 @@ fn zeroed_zm_event() -> ZmEvent {
         role: 0, scan: 0, bitrate: 0, language: [0; 4], join: 0, fields: 0, bottom_field_first: -1,
         pixel_aspect_h: 0, pixel_aspect_v: 0,
         colour_primaries: 0, colour_transfer: 0, colour_matrix: 0, full_range: 0,
-        status: 0, status_value: 0, http_status: 0, starved_with_data: 0,
+        status: 0, status_value: 0, http_status: 0, starved_with_data: 0, pause_reason: 0,
         auth_scheme: std::ptr::null(), auth_realm: std::ptr::null(),
         auth_origin: std::ptr::null(), auth_metadata: std::ptr::null(),
         text: std::ptr::null(),
@@ -593,10 +602,12 @@ fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
                 session::Buffer::Pause {
                     hold_at_27mhz,
                     starving_track,
+                    reason,
                 } => {
                     out.status = 2;
                     out.status_value = *hold_at_27mhz;
                     out.track_id = starving_track.unwrap_or(0);
+                    out.pause_reason = *reason as u8;
                 }
                 session::Buffer::Resume { at_27mhz } => {
                     out.status = 3;
@@ -748,6 +759,18 @@ pub unsafe extern "C" fn zm_session_stall_memory(
     *peak_us = p;
     *age_us = a;
     true
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_buffer_stats(s: *mut ZmSession, out: *mut ZmBufferStats) {
+    if s.is_null() || out.is_null() {
+        return;
+    }
+    let bs = (*s).client.buffer_stats();
+    (*out).stalls = bs.stalls;
+    (*out).reprimes = bs.reprimes;
+    (*out).discontinuities = bs.discontinuities;
+    (*out).longest_freeze_us = bs.longest_freeze_us;
 }
 
 #[no_mangle]

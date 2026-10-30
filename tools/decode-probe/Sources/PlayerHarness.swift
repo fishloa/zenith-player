@@ -94,13 +94,13 @@ enum LiveSoak {
             let pass = (s.firstFrameAfter ?? 99) <= 2.5 && bufferingEpisodes == 0 && maxReconnect == 0
                 && s.framesDropped <= 1 && s.audioFlushes == 0 && s.audioTrack != nil && stopTime < 0.5   // dropped ≤1: see above
             if pass { passed += 1 }
-            log(String(format: "SOAK %@ %@ first_frame=%.2fs buffering=%d reconnects=%d restarts=%d dropped=%d audio_flushes=%d av=%.3fs audio=%@ stop=%.3fs starved_nodata=%d starved_data=%d max_chunk_gap=%.2fs max_feed=%.3fs byte=%.2fs track=%.2fs join=%.2fs fps=%.2f hw=%@ display_frames=%d display_dropped=%d decoded=%d enqueued=%d audio_min_lead=%.2fs audio_late=%d deint_wait=%.3fs deint_gpu=%.3fs decode_call=%.3fs demux_feed=%.3fs pauses=[%@]",
+            log(String(format: "SOAK %@ %@ first_frame=%.2fs buffering=%d reconnects=%d restarts=%d dropped=%d audio_flushes=%d av=%.3fs audio=%@ stop=%.3fs starved_nodata=%d starved_data=%d max_chunk_gap=%.2fs max_feed=%.3fs byte=%.2fs track=%.2fs join=%.2fs fps=%.2f hw=%@ display_frames=%d display_dropped=%d decoded=%d enqueued=%d audio_min_lead=%.2fs audio_late=%d deint_wait=%.3fs deint_gpu=%.3fs decode_call=%.3fs demux_feed=%.3fs discontinuities=%d pauses=[%@]",
                        pass ? "PASS" : "FAIL", id, s.firstFrameAfter ?? -1, bufferingEpisodes, maxReconnect, s.restarts,
                        s.framesDropped, s.audioFlushes, s.avOffset, s.audioTrackLabel ?? "none", stopTime,
                        s.starvedNoData, s.starvedWithData, s.maxChunkGap, s.maxFeedSeconds,
                        s.firstByteAfter ?? -1, s.firstTrackAfter ?? -1, s.joinPointAfter ?? -1,
                        s.outputFrameRate ?? -1, s.hardwareDecode.map { $0 ? "yes" : "no" } ?? "?", shown, late, s.framesDecoded, s.framesEnqueued,
-                       s.minAudioLeadSeconds ?? -1, s.audioLateBuffers, s.maxDeintWait, s.maxDeintGPU, s.maxDecodeCall, s.maxDemuxFeed, s.lastPauseInfo ?? ""))
+                       s.minAudioLeadSeconds ?? -1, s.audioLateBuffers, s.maxDeintWait, s.maxDeintGPU, s.maxDecodeCall, s.maxDemuxFeed, s.discontinuities, s.lastPauseInfo ?? ""))
         }
         log("SOAK DONE \(passed)/\(urls.count) passed")
     }

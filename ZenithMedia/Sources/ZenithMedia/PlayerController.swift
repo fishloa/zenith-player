@@ -19,7 +19,7 @@ public enum StreamCredential: Sendable {
 
 enum BufferDecision: Equatable {
     case start
-    case pause(holdAt: CMTime, starvingAudio: Bool)
+    case pause(holdAt: CMTime, starvingAudio: Bool, reason: PauseReason)
     case resume(at: CMTime)
 }
 
@@ -156,6 +156,7 @@ public struct PlayerStats: Sendable {
     public var starts = 0
     /// Times the buffer ran dry and playback re-buffered in place.
     public var rebuffers = 0
+    public var discontinuities = 0
     /// Starvations while no network data arrived for > 0.25 s (delivery stall)…
     public var starvedNoData = 0
     /// …and while data kept arriving (the stream fell behind real time, or we did).
@@ -292,6 +293,7 @@ public final class PlayerController {
     public func stop() {
         generation += 1
         if let m = currentSource?.stallMemory { stallMemory = (peak: m.peakUs, age: m.ageUs) }
+        if let bs = currentSource?.bufferStats { stats.discontinuities = bs.discontinuities }
         currentSource?.close()
         currentSource = nil
         currentPipe?.abort()
@@ -581,9 +583,9 @@ final class Pipeline: @unchecked Sendable {
                 case .buffer(let be):
                     switch be {
                     case .start: self.apply(.start)
-                    case .pause(let hold, let track):
+                    case .pause(let hold, let track, let reason):
                         let starvingAudio = (track != nil && track == self.audio?.info.trackID)
-                        self.apply(.pause(holdAt: CMTime(value: Int64(hold), timescale: 27_000_000), starvingAudio: starvingAudio))
+                        self.apply(.pause(holdAt: CMTime(value: Int64(hold), timescale: 27_000_000), starvingAudio: starvingAudio, reason: reason))
                     case .resume(let at27):
                         self.apply(.resume(at: CMTime(value: Int64(at27), timescale: 27_000_000)))
                     }
@@ -1012,7 +1014,7 @@ final class Pipeline: @unchecked Sendable {
         switch d {
         case .start:
             startAllowed = true
-        case .pause(let hold, let starvingAudio):
+        case .pause(let hold, let starvingAudio, let reason):
             guard started, !paused, policy.rebufferOnStarvation else { return }
             holdAt = hold
             paused = true
@@ -1022,8 +1024,9 @@ final class Pipeline: @unchecked Sendable {
             let age = lastChunkAt.map { Date().timeIntervalSince($0) } ?? .infinity
             if age > 0.25 { stats.starvedNoData += 1 } else { stats.starvedWithData += 1 }
             if starvingAudio { stats.starvedOnAudio += 1 }
+            if let bs = source?.bufferStats { stats.discontinuities = bs.discontinuities }
             if let c = clockTime() {
-                stats.lastPauseInfo = (stats.lastPauseInfo.map { $0 + " | " } ?? "") + "t+\(String(format: "%.1f", Date().timeIntervalSince(born)))s pause at \(String(format: "%.3f", CMTimeGetSeconds(c))) video_end \(lastVideoPTS.map { String(format: "%.3f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end \(lastAudioEnd.map { String(format: "%.3f", CMTimeGetSeconds($0)) } ?? "-")"
+                stats.lastPauseInfo = (stats.lastPauseInfo.map { $0 + " | " } ?? "") + "t+\(String(format: "%.1f", Date().timeIntervalSince(born)))s pause reason=\(reason.name) at \(String(format: "%.3f", CMTimeGetSeconds(c))) video_end \(lastVideoPTS.map { String(format: "%.3f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end \(lastAudioEnd.map { String(format: "%.3f", CMTimeGetSeconds($0)) } ?? "-")"
             }
             state = .starved
             lock.unlock()

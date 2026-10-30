@@ -7,7 +7,7 @@ use crate::demux::{Converter, Event as DemuxEvent};
 
 pub enum Buffer {
     Start { at_27mhz: u64 },
-    Pause { hold_at_27mhz: u64, starving_track: Option<u32> },
+    Pause { hold_at_27mhz: u64, starving_track: Option<u32>, reason: u32 },
     Resume { at_27mhz: u64 },
 }
 
@@ -37,6 +37,16 @@ pub enum ClientEvent {
         chosen: usize,
         lines: Vec<String>,
     },
+}
+
+pub fn pause_reason_code(r: &broadcast_client::PauseReason) -> u32 {
+    match r {
+        broadcast_client::PauseReason::NoData => 1,
+        broadcast_client::PauseReason::DataArriving => 2,
+        broadcast_client::PauseReason::Discontinuity => 3,
+        broadcast_client::PauseReason::Reprime => 4,
+        _ => 0,
+    }
 }
 
 pub struct Client {
@@ -112,6 +122,10 @@ impl Client {
     pub fn stall_memory(&self) -> (u64, u64) {
         let s = self.session.stall_memory();
         (s.peak_us, s.age_us)
+    }
+
+    pub fn buffer_stats(&self) -> broadcast_client::BufferStats {
+        self.session.buffer_stats()
     }
 
     pub fn on_playback_position(&mut self, now_us: u64, pos: Option<u64>) {
@@ -245,9 +259,11 @@ impl Client {
                     broadcast_client::BufferEvent::Pause {
                         hold_at_27mhz,
                         starving_track,
+                        reason,
                     } => Buffer::Pause {
                         hold_at_27mhz: hold_at_27mhz,
                         starving_track: starving_track,
+                        reason: pause_reason_code(&reason),
                     },
                     broadcast_client::BufferEvent::Resume { at_27mhz } => {
                         Buffer::Resume { at_27mhz: at_27mhz }
@@ -396,5 +412,13 @@ mod tests {
     #[test]
     fn open_rejects_rtsp() {
         assert!(Client::open("rtsp://h/x", 0).is_err());
+    }
+
+    #[test]
+    fn pause_reason_codes() {
+        assert_eq!(pause_reason_code(&broadcast_client::PauseReason::NoData), 1);
+        assert_eq!(pause_reason_code(&broadcast_client::PauseReason::DataArriving), 2);
+        assert_eq!(pause_reason_code(&broadcast_client::PauseReason::Discontinuity), 3);
+        assert_eq!(pause_reason_code(&broadcast_client::PauseReason::Reprime), 4);
     }
 }
