@@ -81,8 +81,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-auth"
-version = "0.5.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05cc74c2d9bc2f256df627068d9525b37ebe5983fe5909c578cff2349d91b340"
 dependencies = [
  "base64 0.23.1",
  "form_urlencoded",
@@ -93,7 +94,7 @@ dependencies = [
  "lru",
  "md-5 0.11.0",
  "percent-encoding",
- "rand",
+ "rand 0.10.3",
  "sha2 0.11.1",
  "subtle",
  "thiserror",
@@ -104,7 +105,8 @@ dependencies = [
 [[package]]
 name = "broadcast-client"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d78be5e52a2728072a4f736dadda765f3a0c3fb1ae2ca964b3bf02f40c5b2a00"
 dependencies = [
  "broadcast-auth",
  "broadcast-common",
@@ -114,13 +116,13 @@ dependencies = [
  "cookie_store",
  "dash-runtime",
  "dvb-si",
+ "headers",
  "hls-runtime",
  "http",
  "mpeg-ts",
  "percent-encoding",
  "rtsp-runtime",
  "sdp-types",
- "serde",
  "thiserror",
  "transmux",
  "tshttp-runtime",
@@ -130,7 +132,8 @@ dependencies = [
 [[package]]
 name = "broadcast-common"
 version = "10.0.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "929cfb6b3467025a1bb59c716fb91d7a2cead89560e18160b3a550c37bf33a8f"
 dependencies = [
  "chrono",
  "hex",
@@ -139,8 +142,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-hls"
-version = "0.4.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd35046684e6ef79f6243f6336b2751c2eef1569eea12d9257103eed44f72829"
 dependencies = [
  "broadcast-common",
  "jiff",
@@ -160,7 +164,8 @@ dependencies = [
 [[package]]
 name = "buffering-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3ae709f7bd2be09d958624da618f4d0c8ea00f4be012db73d6a3636ce90888f"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -204,10 +209,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "cc-data"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92aea2bc2bc5841a61853a63922d8e296e2e99b0eb4cd42602bab76b0f737cec"
+dependencies = [
+ "broadcast-common",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
+
+[[package]]
+name = "chacha20"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65c35e4b699c7e15ccbe7ee35c005e4fc0a278d22238a2857e6ce2dadeda1b06"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.3.1",
+ "rand_core 0.10.1",
+]
 
 [[package]]
 name = "chrono"
@@ -245,8 +272,9 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 
 [[package]]
 name = "container-probe"
-version = "0.2.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23dffe922246354517780dd161e75fd6b800662a68d5580d6d83d993557fe30c"
 dependencies = [
  "broadcast-common",
 ]
@@ -361,7 +389,8 @@ dependencies = [
 [[package]]
 name = "dash-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f9fe0f0988c8dd93051b6a29d756d1ba859537c39f15c6c4ba4db9b9813a8fb"
 dependencies = [
  "broadcast-common",
  "container-probe",
@@ -453,8 +482,9 @@ dependencies = [
 
 [[package]]
 name = "dvb-si"
-version = "12.0.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "12.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d79b26a9bcd7097636c94120ad75a86e1d6a1cbf8bf3d97dc7c4157cb3b5d639"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -646,6 +676,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "getrandom"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
+dependencies = [
+ "cfg-if",
+ "libc",
+ "r-efi",
+ "rand_core 0.10.1",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -686,13 +728,15 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hls-runtime"
-version = "0.9.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edcd58b80f39979ba7f2f3add065c0791a2a4e756e095db06bff8aaa09a32415"
 dependencies = [
  "broadcast-common",
  "broadcast-hls",
  "bytes",
  "container-probe",
+ "iso-639",
  "jiff",
  "media-plane",
  "serde",
@@ -732,7 +776,7 @@ dependencies = [
  "hex",
  "md-5 0.10.6",
  "memchr",
- "rand",
+ "rand 0.8.8",
  "sha2 0.10.9",
 ]
 
@@ -900,6 +944,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "iso-639"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad7d3f647f560b2e5c7d7da6d9326223893247feb3e086a388a14654683aa2f2"
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -979,9 +1029,9 @@ checksum = "4744e383959f0db86ede514b809b1c53251889093803c05267acc7d4e7030d70"
 
 [[package]]
 name = "lock_api"
-version = "0.4.14"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
+checksum = "65d91b22da179613dcf4d6ec8349563f52a363f6849e03b00dd0a185ec4a59af"
 dependencies = [
  "scopeguard",
 ]
@@ -994,9 +1044,9 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "lru"
-version = "0.18.5"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef9ac18847474e638e3702b76c65d4eb93428471a74778ef0f1be711717f89b5"
+checksum = "4a9f71e3591c7ec44d3e563e87bf14ddc2bada8519dca046e5b0e560cd004e2d"
 dependencies = [
  "hashbrown",
 ]
@@ -1023,8 +1073,9 @@ dependencies = [
 
 [[package]]
 name = "media-plane"
-version = "0.7.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb2a7121ec04045e43b41afe7c48e9fe426b8c52f595c2dabfc0b41d95a932b3"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -1056,7 +1107,8 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 [[package]]
 name = "mp4-emsg"
 version = "0.5.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10cafdfaa4eea036ca37e65c687555652df53979a4be384da894cac55e1e5345"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1066,7 +1118,8 @@ dependencies = [
 [[package]]
 name = "mpeg-pes"
 version = "0.6.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07a4245a990f646a032cdf48ecfce4336c548b2aa07d539dfe9fb760d52635d0"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1076,7 +1129,8 @@ dependencies = [
 [[package]]
 name = "mpeg-ps"
 version = "0.6.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e414c1d9a0efde1d530388366c1223a32aefab596c3c917fed0c7643ec4e36e1"
 dependencies = [
  "broadcast-common",
  "mpeg-pes",
@@ -1087,7 +1141,8 @@ dependencies = [
 [[package]]
 name = "mpeg-ts"
 version = "0.6.2"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58e29fe9663eaab1366e35fee07415500dca8fde1ba58df7cfa5a363920f0b97"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -1182,9 +1237,9 @@ checksum = "f38d5652c16fde515bb1ecef450ab0f6a219d619a7274976324d5e377f7dceba"
 
 [[package]]
 name = "parking_lot"
-version = "0.12.5"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a"
+checksum = "a9cf937ca4e1d0b7578784559063422fc39ae7c5a00f02471f2614d5486fd226"
 dependencies = [
  "lock_api",
  "parking_lot_core",
@@ -1192,11 +1247,10 @@ dependencies = [
 
 [[package]]
 name = "parking_lot_core"
-version = "0.9.12"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
+checksum = "9cfff060068cc18aa7815010fcaf80c68c7fb9e85fc7f5c0f9bf142c21d19826"
 dependencies = [
- "cfg-if",
  "libc",
  "redox_syscall",
  "smallvec",
@@ -1291,6 +1345,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "r-efi"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
+
+[[package]]
 name = "rand"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1298,7 +1358,18 @@ checksum = "e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c"
 dependencies = [
  "libc",
  "rand_chacha",
- "rand_core",
+ "rand_core 0.6.4",
+]
+
+[[package]]
+name = "rand"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65c9fb96cbc91e3478eaae79a69fcd3f1ae4ad052e471fe6732fff548984b4af"
+dependencies = [
+ "chacha20",
+ "getrandom 0.4.3",
+ "rand_core 0.10.1",
 ]
 
 [[package]]
@@ -1308,7 +1379,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
 dependencies = [
  "ppv-lite86",
- "rand_core",
+ "rand_core 0.6.4",
 ]
 
 [[package]]
@@ -1317,14 +1388,20 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
- "getrandom",
+ "getrandom 0.2.17",
 ]
 
 [[package]]
-name = "redox_syscall"
-version = "0.5.18"
+name = "rand_core"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed2bf2547551a7053d6fdfafda3f938979645c44812fbfcda098faae3f1a362d"
+checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
+
+[[package]]
+name = "redox_syscall"
+version = "0.9.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "580c875845b41ecb1564ad1ae4703044cef774145e3d7a94dc2b3fa7c97868fd"
 dependencies = [
  "bitflags 2.13.2",
 ]
@@ -1332,7 +1409,8 @@ dependencies = [
 [[package]]
 name = "rtcp-packet"
 version = "0.6.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "082025ba47567ce0fef0f900f79404dccd115fc7fa751612c8293e4ea6cc5b52"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1342,7 +1420,8 @@ dependencies = [
 [[package]]
 name = "rtp-packet"
 version = "0.5.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac456ecf58432f5a5086517181f2e0809457dbd986debbc9059afc4525cecfe7"
 dependencies = [
  "broadcast-common",
  "serde",
@@ -1351,8 +1430,9 @@ dependencies = [
 
 [[package]]
 name = "rtsp-runtime"
-version = "0.8.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a870c835e85e96c617308ad1bb2d72e71bf54684784392e124cb792ec39b145"
 dependencies = [
  "broadcast-auth",
  "http-auth",
@@ -1390,7 +1470,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scte35-splice"
 version = "4.0.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a49b42b5c75e867313b41eae0cbc250eaf8dc6c13db874583ad6bba5b527eef4"
 dependencies = [
  "base64 0.23.1",
  "broadcast-common",
@@ -1399,9 +1480,9 @@ dependencies = [
 
 [[package]]
 name = "sdp-types"
-version = "0.2.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46d46be065d0565cf5c6703b6ba9f92b0de85b20a4c83f87e110bc0a1040b1bc"
+checksum = "f71a591db992f0ae4b7175a09214bdc337d073293d9514009313596a5fdcb46e"
 dependencies = [
  "bstr",
  "fallible-iterator",
@@ -1606,8 +1687,9 @@ dependencies = [
 
 [[package]]
 name = "timed-metadata"
-version = "0.7.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73092f83079a8d14cc55422ae50bdc6f08e530455a6d7dda49b119ecd1bb23aa"
 dependencies = [
  "broadcast-common",
  "broadcast-hls",
@@ -1666,8 +1748,9 @@ dependencies = [
 
 [[package]]
 name = "transmux"
-version = "0.27.7"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0f3931ee0ab991fd3da0be48da796bdd909bc0c38a4c719bc1f190c891b1731"
 dependencies = [
  "aes",
  "base64 0.23.1",
@@ -1675,6 +1758,7 @@ dependencies = [
  "broadcast-hls",
  "bytes",
  "cbc",
+ "cc-data",
  "ctr",
  "dvb-si",
  "hex",
@@ -1698,7 +1782,8 @@ dependencies = [
 [[package]]
 name = "tshttp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fishloa/rust-broadcast?rev=b0731ba30c889b24ab6038920fb1304d3715b0c0#b0731ba30c889b24ab6038920fb1304d3715b0c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc09cbfa8102533e20861518229cc94612f6c350c677367216b4e3e17e7dc612"
 dependencies = [
  "broadcast-common",
  "serde",

@@ -50,6 +50,8 @@ public enum SessionAction: Sendable {
     case http(conn: UInt32, method: String, url: URL, headers: [(String, String)], range: ClosedRange<UInt64>?)
     case close(conn: UInt32)
     case wake(atMicros: UInt64)
+    case tcpConnect(conn: UInt32, host: String, port: UInt16, tls: Bool)
+    case send(conn: UInt32, bytes: Data)
 }
 
 extension SessionAction: Equatable {
@@ -61,6 +63,10 @@ extension SessionAction: Equatable {
             return a == b
         case (.wake(let a), .wake(let b)):
             return a == b
+        case (.tcpConnect(let ac, let ah, let ap, let at), .tcpConnect(let bc, let bh, let bp, let bt)):
+            return ac == bc && ah == bh && ap == bp && at == bt
+        case (.send(let ac, let ab), .send(let bc, let bb)):
+            return ac == bc && ab == bb
         default:
             return false
         }
@@ -125,6 +131,17 @@ final class ZMSession {
                 return .close(conn: a.conn)
             case UInt32(ZM_ACT_WAKE):
                 return .wake(atMicros: a.wake_us)
+            case UInt32(ZM_ACT_TCP_CONNECT):
+                let host = a.host != nil ? String(cString: a.host!) : ""
+                return .tcpConnect(conn: a.conn, host: host, port: a.port, tls: a.tls)
+            case UInt32(ZM_ACT_SEND):
+                let bytes: Data
+                if a.bytes != nil && a.bytes_len > 0 {
+                    bytes = Data(bytes: a.bytes!, count: Int(a.bytes_len))
+                } else {
+                    bytes = Data()
+                }
+                return .send(conn: a.conn, bytes: bytes)
             default:
                 continue
             }
@@ -162,6 +179,10 @@ final class ZMSession {
         } else {
             zm_session_on_closed(handle, conn, nil, nowMicros)
         }
+    }
+
+    func onConnected(conn: UInt32) {
+        zm_session_on_connected(handle, conn)
     }
 
     @discardableResult

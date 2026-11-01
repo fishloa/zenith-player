@@ -49,6 +49,16 @@ pub fn pause_reason_code(r: &broadcast_client::PauseReason) -> u32 {
     }
 }
 
+fn client_config(start_us: u64) -> Config {
+    let mut config = Config::default();
+    if start_us > 0 {
+        let p = &mut config.buffer.policy;
+        p.initial_us = start_us.clamp(p.min_us, p.max_us);
+    }
+    config.segment_inactivity_timeout_us = 4_000_000;
+    config
+}
+
 pub struct Client {
     session: Session,
     conv: Converter,
@@ -69,14 +79,13 @@ impl Client {
     /// `start_us`: cold-start buffer target (0 = crate default); `peak_us`/`age_us`:
     /// stall memory of the previous session on this path (both 0 = none).
     pub fn open_with(url: &str, now_us: u64, start_us: u64, peak_us: u64, age_us: u64) -> Result<Client, BcError> {
-        if !(url.to_ascii_lowercase().starts_with("http://") || url.to_ascii_lowercase().starts_with("https://")) {
+        let lower = url.to_ascii_lowercase();
+        if !(lower.starts_with("http://") || lower.starts_with("https://")
+            || lower.starts_with("rtsp://") || lower.starts_with("rtsps://"))
+        {
             return Err(BcError::UnsupportedScheme(url.to_string()));
         }
-        let mut config = Config::default();
-        if start_us > 0 {
-            let p = &mut config.buffer.policy;
-            p.initial_us = start_us.clamp(p.min_us, p.max_us);
-        }
+        let config = client_config(start_us);
         let seed = (peak_us > 0).then(|| buffering_runtime::StallMemorySnapshot::new(peak_us, age_us));
         let session = Session::open_with_memory(url, config, now_us, seed)?;
         Ok(Client {
@@ -113,6 +122,10 @@ impl Client {
     pub fn on_closed(&mut self, conn: u32, error: Option<String>, now_us: u64) {
         self.now_us = now_us;
         self.session.on_closed(conn, error, now_us);
+    }
+
+    pub fn on_connected(&mut self, conn: u32) {
+        self.session.on_connected(conn);
     }
 
     pub fn set_credentials(&mut self, c: broadcast_client::Credentials) -> bool {
@@ -410,8 +423,25 @@ mod tests {
     }
 
     #[test]
-    fn open_rejects_rtsp() {
-        assert!(Client::open("rtsp://h/x", 0).is_err());
+    fn open_accepts_rtsp() {
+        assert!(Client::open("rtsp://h/x", 0).is_ok());
+    }
+
+    #[test]
+    fn open_rejects_ftp() {
+        assert!(Client::open("ftp://h/x", 0).is_err());
+    }
+
+    #[test]
+    fn client_config_stalls_after_4s() {
+        assert_eq!(client_config(0).segment_inactivity_timeout_us, 4_000_000);
+    }
+
+    #[test]
+    fn client_config_keeps_start_buffer() {
+        let c = client_config(3_000_000);
+        let p = &c.buffer.policy;
+        assert_eq!(p.initial_us, 3_000_000.clamp(p.min_us, p.max_us));
     }
 
     #[test]

@@ -60,7 +60,7 @@ enum LiveSoak {
         let args = ProcessInfo.processInfo.arguments
         let only = args.firstIndex(of: "-channels").flatMap { args.indices.contains($0 + 1) ? Set(args[$0 + 1].split(separator: ",").map(String.init)) : nil }
         let urls = String(decoding: data, as: UTF8.self).split(whereSeparator: \.isNewline)
-            .map(String.init).filter { $0.hasPrefix("http") }.compactMap(URL.init(string:))
+            .map(String.init).filter { let l = $0.lowercased(); return l.hasPrefix("http://") || l.hasPrefix("https://") || l.hasPrefix("rtsp://") || l.hasPrefix("rtsps://") }.compactMap(URL.init(string:))
             .filter { only?.contains($0.lastPathComponent) ?? true }
         log("SOAK \(urls.count) channels × \(seconds) s")
         var passed = 0

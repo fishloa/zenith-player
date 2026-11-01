@@ -368,25 +368,34 @@ public final class PlayerController {
                     source.close()
                     return
                 case .starting, .starved:
-                    let since = waitStart ?? Date(); waitStart = since
-                    let t = Date().timeIntervalSince(since)
                     let sessionAttempt: Int? = if case .reconnecting(let n)? = status { n } else { nil }
-                    if sessionAttempt != nil || reconnects > 0 {
+                    if sessionAttempt != nil {
+                        waitStart = Date()
                         let shown: Int = if case .reconnecting(let m) = self.phase { m } else { 0 }
                         self.phase = .reconnecting(attempt: max(shown, reconnects, sessionAttempt ?? 0))
-                    } else if played {
-                        self.phase = .buffering(t > self.policy.stallMessageAfter ? "Waiting for server… (\(Int(t))s)" : "Buffering…")
-                    }
-                    if t > (played ? self.policy.stallReconnectAfter : self.policy.startTimeout) {
-                        waitStart = nil
-                        reconnects += 1
-                        self.phase = .reconnecting(attempt: reconnects)
-                        pipe.restartOnQueue(newTimeline: true)
-                        source.reconnect()
+                    } else {
+                        let since = waitStart ?? Date(); waitStart = since
+                        let t = Date().timeIntervalSince(since)
+                        if reconnects > 0 {
+                            let shown: Int = if case .reconnecting(let m) = self.phase { m } else { 0 }
+                            self.phase = .reconnecting(attempt: max(shown, reconnects, 0))
+                        } else if played {
+                            self.phase = .buffering(t > self.policy.stallMessageAfter ? "Waiting for server… (\(Int(t))s)" : "Buffering…")
+                        }
+                        if t > (played ? self.policy.stallReconnectAfter : self.policy.startTimeout) {
+                            waitStart = nil
+                            reconnects += 1
+                            let shown: Int = if case .reconnecting(let m) = self.phase { m } else { 0 }
+                            self.phase = .reconnecting(attempt: max(shown, reconnects, sessionAttempt ?? 0))
+                            pipe.restartOnQueue(newTimeline: true)
+                            source.reconnect()
+                        }
                     }
                 case .decoderBroken:
+                    let shown: Int = if case .reconnecting(let m) = self.phase { m } else { 0 }
+                    let sa: Int? = if case .reconnecting(let n)? = status { n } else { nil }
                     reconnects += 1
-                    self.phase = .reconnecting(attempt: reconnects)
+                    self.phase = .reconnecting(attempt: max(shown, reconnects, sa ?? 0))
                     pipe.restartOnQueue(newTimeline: false)
                     source.reconnect()
                 }

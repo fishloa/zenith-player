@@ -27,15 +27,15 @@ public final class ClientSource: @unchecked Sendable {
 
     public convenience init?(url: URL, startBuffer: TimeInterval? = nil, stallMemory: (peak: UInt64, age: UInt64)? = nil,
                              onEvents: @escaping @Sendable ([ClientEvent]) -> Void) {
-        self.init(url: url, startBuffer: startBuffer, stallMemory: stallMemory, transport: { queue, onResponse, onData, onClosed in
-            TransportHost(queue: queue, onResponse: onResponse, onData: onData, onClosed: onClosed)
+        self.init(url: url, startBuffer: startBuffer, stallMemory: stallMemory, transport: { queue, onResponse, onData, onClosed, onConnected in
+            TransportHost(queue: queue, onResponse: onResponse, onData: onData, onClosed: onClosed, onConnected: onConnected)
         }, onEvents: onEvents)
     }
 
     public convenience init?(bytes make: @escaping () -> ByteSource, startBuffer: TimeInterval? = nil,
                              stallMemory: (peak: UInt64, age: UInt64)? = nil, onEvents: @escaping @Sendable ([ClientEvent]) -> Void) {
-        self.init(url: URL(string: "http://local/stream.ts")!, startBuffer: startBuffer, stallMemory: stallMemory, transport: { queue, onResponse, onData, onClosed in
-            ByteSourceTransport(queue: queue, make: make, onResponse: onResponse, onData: onData, onClosed: onClosed)
+        self.init(url: URL(string: "http://local/stream.ts")!, startBuffer: startBuffer, stallMemory: stallMemory, transport: { queue, onResponse, onData, onClosed, onConnected in
+            ByteSourceTransport(queue: queue, make: make, onResponse: onResponse, onData: onData, onClosed: onClosed, onConnected: onConnected)
         }, onEvents: onEvents)
     }
 
@@ -63,6 +63,11 @@ public final class ClientSource: @unchecked Sendable {
             { [weak self] conn, error in
                 guard let self, !self.closed else { return }
                 self.session.closed(conn: conn, error: error, nowMicros: Self.nowMicros())
+                self.pump()
+            },
+            { [weak self] conn in
+                guard let self, !self.closed else { return }
+                self.session.onConnected(conn: conn)
                 self.pump()
             })
     }
@@ -202,6 +207,10 @@ public final class ClientSource: @unchecked Sendable {
                 transport.start(conn: conn, method: method, url: url, headers: headers, range: range)
             case .close(let conn):
                 transport.cancel(conn: conn)
+            case .tcpConnect(let conn, let host, let port, let tls):
+                transport.connect(conn: conn, host: host, port: port, tls: tls)
+            case .send(let conn, let bytes):
+                transport.send(conn: conn, bytes: bytes)
             case .wake(let at):
                 scheduleWake(atMicros: at)
             }

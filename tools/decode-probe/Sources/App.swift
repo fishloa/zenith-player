@@ -51,12 +51,14 @@ struct DecodeProbeApp: App {
             .onAppear { UIApplication.shared.isIdleTimerDisabled = true } // keep the TV awake for unattended runs
             .task {
                 ProbeLog.reset()
-                // -playerOnly skips the codec capability probe (faster harness runs).
-                if !ProcessInfo.processInfo.arguments.contains("-playerOnly") {
+                let args = ProcessInfo.processInfo.arguments
+                if let i = args.firstIndex(of: "-runId"), args.indices.contains(i + 1) {
+                    ProbeLog.emit("RUN " + args[i + 1])
+                }
+                if !args.contains("-playerOnly") {
                     let result = await Task.detached(priority: .userInitiated) { Probe.run() }.value
                     lines = result
                 }
-                let args = ProcessInfo.processInfo.arguments
                 if let i = args.firstIndex(of: "-throughput"), args.indices.contains(i + 1), let u = URL(string: args[i + 1]) {
                     await Throughput.run(url: u) { line in lines.append(line); ProbeLog.emit(line) }
                 } else if let i = args.firstIndex(of: "-syncgap"), args.indices.contains(i + 1) {

@@ -292,6 +292,11 @@ pub struct ZmAction {
     pub range_start: u64,
     pub range_len: u64,
     pub wake_us: u64,
+    pub host: *const std::ffi::c_char,
+    pub port: u16,
+    pub tls: bool,
+    pub bytes: *const u8,
+    pub bytes_len: usize,
 }
 
 pub struct ZmSession {
@@ -310,6 +315,10 @@ struct HeldAction {
     range_start: u64,
     range_len: u64,
     wake_us: u64,
+    host: Option<CString>,
+    port: u16,
+    tls: bool,
+    bytes: Option<Vec<u8>>,
 }
 
 struct HeldEvent {
@@ -471,6 +480,10 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     range_start,
                     range_len,
                     wake_us: 0,
+                    host: None,
+                    port: 0,
+                    tls: false,
+                    bytes: None,
                 };
             }
             broadcast_client::Action::Close { conn } => {
@@ -484,6 +497,10 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     range_start: 0,
                     range_len: 0,
                     wake_us: 0,
+                    host: None,
+                    port: 0,
+                    tls: false,
+                    bytes: None,
                 };
             }
             broadcast_client::Action::WakeAt(us) => {
@@ -497,6 +514,44 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     range_start: 0,
                     range_len: 0,
                     wake_us: us,
+                    host: None,
+                    port: 0,
+                    tls: false,
+                    bytes: None,
+                };
+            }
+            broadcast_client::Action::TcpConnect { conn, host, port, tls } => {
+                break HeldAction {
+                    method: None,
+                    url: None,
+                    headers: None,
+                    kind: 4,
+                    conn,
+                    has_range: false,
+                    range_start: 0,
+                    range_len: 0,
+                    wake_us: 0,
+                    host: CString::new(host).ok(),
+                    port,
+                    tls,
+                    bytes: None,
+                };
+            }
+            broadcast_client::Action::Send { conn, bytes } => {
+                break HeldAction {
+                    method: None,
+                    url: None,
+                    headers: None,
+                    kind: 5,
+                    conn,
+                    has_range: false,
+                    range_start: 0,
+                    range_len: 0,
+                    wake_us: 0,
+                    host: None,
+                    port: 0,
+                    tls: false,
+                    bytes: Some(bytes),
                 };
             }
             _ => continue,
@@ -512,6 +567,11 @@ pub unsafe extern "C" fn zm_session_poll_action(
     outref.range_start = held.range_start;
     outref.range_len = held.range_len;
     outref.wake_us = held.wake_us;
+    outref.host = held.host.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
+    outref.port = held.port;
+    outref.tls = held.tls;
+    outref.bytes = held.bytes.as_ref().map_or(std::ptr::null(), |v| v.as_ptr());
+    outref.bytes_len = held.bytes.as_ref().map_or(0, |v| v.len());
     zs.held_action = Some(held);
     true
 }
@@ -704,6 +764,15 @@ pub unsafe extern "C" fn zm_session_on_closed(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn zm_session_on_connected(s: *mut ZmSession, conn: u32) {
+    if s.is_null() {
+        return;
+    }
+    let zs = &mut *s;
+    zs.client.on_connected(conn);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn zm_session_set_password(
     s: *mut ZmSession,
     user: *const std::ffi::c_char,
@@ -859,6 +928,54 @@ mod ffi_tests {
         }
         let bad = CString::new("rtmp://x/y").unwrap();
         assert!(unsafe { zm_session_open(bad.as_ptr(), 0) }.is_null());
+    }
+
+    #[test]
+    fn session_rtsp_poll_action() {
+        let url = CString::new("rtsp://127.0.0.1:1/x").unwrap();
+        let s = unsafe { zm_session_open(url.as_ptr(), 0) };
+        assert!(!s.is_null());
+        unsafe {
+            let mut a: ZmAction = std::mem::zeroed();
+            assert!(zm_session_poll_action(s, 0, &mut a));
+            assert_eq!(a.kind, 4);
+            assert_eq!(CStr::from_ptr(a.host).to_str().unwrap(), "127.0.0.1");
+            assert_eq!(a.port, 1);
+            assert!(!a.tls);
+            let conn = a.conn;
+            zm_session_on_connected(s, conn);
+            let mut found = false;
+            let mut guard = 0;
+            while guard < 200 && zm_session_poll_action(s, 0, &mut a) {
+                guard += 1;
+                if a.kind == 5 {
+                    let bytes = std::slice::from_raw_parts(a.bytes, a.bytes_len);
+                    let text = String::from_utf8_lossy(bytes);
+                    assert!(text.contains("RTSP/1.0"));
+                    assert!(text.contains("rtsp://"));
+                    let first = text.split_whitespace().next().unwrap_or("");
+                    assert!(
+                        matches!(first, "OPTIONS" | "DESCRIBE" | "SETUP" | "PLAY" | "TEARDOWN"),
+                        "first={}",
+                        first
+                    );
+                    found = true;
+                    break;
+                }
+            }
+            assert!(found);
+            zm_session_free(s);
+        }
+        let url2 = CString::new("rtsps://127.0.0.1:1/x").unwrap();
+        let s2 = unsafe { zm_session_open(url2.as_ptr(), 0) };
+        assert!(!s2.is_null());
+        unsafe {
+            let mut a: ZmAction = std::mem::zeroed();
+            assert!(zm_session_poll_action(s2, 0, &mut a));
+            assert_eq!(a.kind, 4);
+            assert!(a.tls);
+            zm_session_free(s2);
+        }
     }
 
     #[test]

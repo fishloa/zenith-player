@@ -7,6 +7,7 @@ final class ByteSourceTransport: Transport, @unchecked Sendable {
     private let onResponse: (UInt32, Int, [(String, String)]) -> Void
     private let onData: (UInt32, Data) -> Void
     private let onClosed: (UInt32, String?) -> Void
+    private let onConnected: (UInt32) -> Void
 
     private var tasks: [UInt32: Task<Void, Never>] = [:]
     private var cancelled: Set<UInt32> = []
@@ -14,12 +15,14 @@ final class ByteSourceTransport: Transport, @unchecked Sendable {
     init(queue: DispatchQueue, make: @escaping () -> ByteSource,
          onResponse: @escaping (UInt32, Int, [(String, String)]) -> Void,
          onData: @escaping (UInt32, Data) -> Void,
-         onClosed: @escaping (UInt32, String?) -> Void) {
+         onClosed: @escaping (UInt32, String?) -> Void,
+         onConnected: @escaping (UInt32) -> Void) {
         self.queue = queue
         self.make = make
         self.onResponse = onResponse
         self.onData = onData
         self.onClosed = onClosed
+        self.onConnected = onConnected
     }
 
     func start(conn: UInt32, method: String, url: URL, headers: [(String, String)], range: ClosedRange<UInt64>?) {
@@ -56,6 +59,12 @@ final class ByteSourceTransport: Transport, @unchecked Sendable {
             }
         }
         tasks[conn] = task
+    }
+
+    func connect(conn: UInt32, host: String, port: UInt16, tls: Bool) {
+    }
+
+    func send(conn: UInt32, bytes: Data) {
     }
 
     func cancel(conn: UInt32) {

@@ -7,29 +7,33 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 . "$HERE/../../scripts/env.sh"
+. "$HERE/run-filter.sh"
 KEY_ID="${ASC_KEY_ID:?set ASC_KEY_ID (see .env.example)}"
 ISSUER="${ASC_ISSUER_ID:?set ASC_ISSUER_ID}"
 : "${PROBE_BUNDLE_ID:?set PROBE_BUNDLE_ID}" "${TEAM_ID:?set TEAM_ID}"
 export PROBE_BUNDLE_ID TEAM_ID
 DEV="${1:-}"; [ -n "$DEV" ] || DEV="$(xcrun devicectl list devices 2>/dev/null | awk '/AppleTV/ && /physical/ {for(i=1;i<=NF;i++) if($i ~ /^[0-9A-F]{8}-/) {print $i; exit}}')"
 [ -n "$DEV" ] || { echo "no Apple TV found" >&2; exit 1; }
-[ -d Fixtures ] || ./prepare-fixtures.sh
-xcodegen generate -q
-xcodebuild -project DecodeProbe.xcodeproj -scheme DecodeProbe -destination "id=$DEV" -configuration Release \
-  -derivedDataPath build -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
-  -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_$KEY_ID.p8 \
-  -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER" build -quiet
-xcrun devicectl device install app --device "$DEV" build/Build/Products/Release-appletvos/DecodeProbe.app >/dev/null
+if [ "${SKIP_BUILD:-0}" != "1" ]; then
+  [ -d Fixtures ] || ./prepare-fixtures.sh
+  xcodegen generate -q
+  xcodebuild -project DecodeProbe.xcodeproj -scheme DecodeProbe -destination "id=$DEV" -configuration Release \
+    -derivedDataPath build -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
+    -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_$KEY_ID.p8 \
+    -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER" build -quiet
+  xcrun devicectl device install app --device "$DEV" build/Build/Products/Release-appletvos/DecodeProbe.app >/dev/null
+fi
+RUN_ID="$(date +%s)-$$"
 LOG="$(mktemp)"
 shift || true
-xcrun devicectl device process launch --device "$DEV" --console --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u"} "$@" > "$LOG" 2>&1 &
+xcrun devicectl device process launch --device "$DEV" --console --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u"} -runId "$RUN_ID" "$@" > "$LOG" 2>&1 &
 PID=$!
 MARK="${WAIT_FOR:-PROBE PLAYER DONE}"
 # A --console launch sometimes hangs without starting the app: relaunch plainly and follow probe.log.
 for _ in $(seq 1 12); do [ -s "$LOG" ] && break; sleep 5; done
 if [ ! -s "$LOG" ]; then
   kill "$PID" 2>/dev/null || true
-  xcrun devicectl device process launch --device "$DEV" --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u"} "$@" >/dev/null 2>&1 || true
+  timeout 60 xcrun devicectl device process launch --device "$DEV" --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u"} -runId "$RUN_ID" "$@" >/dev/null 2>&1 || true
   sleep 10
 fi
 for _ in $(seq 1 1200); do
@@ -45,17 +49,49 @@ if ! grep -q "$MARK" "$LOG"; then
     # Console detached but the app keeps running: follow Library/Caches/probe.log instead.
     echo "console detached; following the app's Library/Caches/probe.log" >&2
     COPY="$(mktemp -d)"
+    started=0
+    gone=0
     for _ in $(seq 1 600); do
-      xcrun devicectl device copy from --device "$DEV" --domain-type appDataContainer \
+      timeout 60 xcrun devicectl device copy from --device "$DEV" --domain-type appDataContainer \
         --domain-identifier "$PROBE_BUNDLE_ID" --source Library/Caches/probe.log --destination "$COPY/probe.log" >/dev/null 2>&1 || true
-      grep -q "$MARK" "$COPY/probe.log" 2>/dev/null && break
-      # The app was backgrounded/killed (someone used the TV, it slept): stop waiting.
-      if ! xcrun devicectl device info processes --device "$DEV" 2>/dev/null | grep -q DecodeProbe.app; then
-        echo "app no longer running on the device; giving up" >&2; break
+      if grep -q "PROBE RUN $RUN_ID" "$COPY/probe.log" 2>/dev/null; then
+        started=1
       fi
+      if [ "$started" = 1 ] && grep -q "$MARK" "$COPY/probe.log" 2>/dev/null; then
+        break
+      fi
+      # The app was backgrounded/killed (someone used the TV, it slept): stop waiting.
+      info_tmp="$(mktemp)"
+      info_rc=0
+      timeout 60 xcrun devicectl device info processes --device "$DEV" >"$info_tmp" 2>/dev/null || info_rc=$?
+      if grep -q DecodeProbe.app "$info_tmp" 2>/dev/null; then
+        gone=0
+      elif [ "$info_rc" -eq 124 ]; then
+        :
+      else
+        gone=$((gone + 1))
+        if [ "$gone" -ge 3 ]; then
+          if [ "$started" = 0 ]; then
+            echo "app did not start this run (probe.log is from an earlier run)" >&2
+            exit 1
+          else
+            echo "app no longer running on the device; giving up" >&2
+            break
+          fi
+        fi
+      fi
+      rm -f "$info_tmp"
       sleep 15
     done
     cat "$COPY/probe.log" >> "$LOG" 2>/dev/null || true
   fi
 fi
-grep '^PROBE ' "$LOG" | awk '!seen[$0]++'
+FILTERED="$(mktemp)"
+if grep -q "PROBE RUN $RUN_ID" "$LOG"; then
+  run_output "$LOG" "$RUN_ID" > "$FILTERED" || true
+fi
+cat "$FILTERED"
+if grep -q "$MARK" "$FILTERED"; then
+  exit 0
+fi
+exit 1

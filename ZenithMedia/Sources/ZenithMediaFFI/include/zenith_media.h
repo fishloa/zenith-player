@@ -74,7 +74,7 @@ ptrdiff_t zm_mpa_decode(zm_mpa *m, const uint8_t *frame, size_t len, int16_t *ou
                         uint32_t *channels, uint32_t *rate, uint32_t labels[8]);
 
 /* ---- session (broadcast-client) ---- */
-enum { ZM_ACT_NONE = 0, ZM_ACT_HTTP = 1, ZM_ACT_CLOSE = 2, ZM_ACT_WAKE = 3 };
+enum { ZM_ACT_NONE = 0, ZM_ACT_HTTP = 1, ZM_ACT_CLOSE = 2, ZM_ACT_WAKE = 3, ZM_ACT_TCP_CONNECT = 4, ZM_ACT_SEND = 5 };
 
 typedef struct {
     uint32_t kind;
@@ -85,6 +85,11 @@ typedef struct {
     bool has_range;
     uint64_t range_start, range_len;
     uint64_t wake_us;
+    const char *host;
+    uint16_t port;
+    bool tls;
+    const uint8_t *bytes;
+    size_t bytes_len;
 } zm_action;
 
 zm_session *zm_session_open(const char *url, uint64_t now_us);
@@ -98,6 +103,7 @@ bool zm_session_poll(zm_session *s, zm_event *out);
 void zm_session_on_response(zm_session *s, uint32_t conn, uint16_t status, const char *headers, uint64_t now_us);
 void zm_session_on_data(zm_session *s, uint32_t conn, const uint8_t *bytes, size_t len, uint64_t now_us);
 void zm_session_on_closed(zm_session *s, uint32_t conn, const char *error, uint64_t now_us);
+void zm_session_on_connected(zm_session *s, uint32_t conn);
 bool zm_session_set_password(zm_session *s, const char *user, const char *password);
 bool zm_session_set_bearer(zm_session *s, const char *token);
 void zm_session_reconnect(zm_session *s, uint64_t now_us);

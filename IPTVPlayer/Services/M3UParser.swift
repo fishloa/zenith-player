@@ -31,7 +31,10 @@ enum M3UParser {
 
                 if i < lines.count {
                     let urlLine = lines[i].trimmingCharacters(in: .whitespaces)
-                    if let streamURL = URL(string: urlLine), urlLine.hasPrefix("http") {
+                    let lower = urlLine.lowercased()
+                    let accepted = lower.hasPrefix("http://") || lower.hasPrefix("https://")
+                        || lower.hasPrefix("rtsp://") || lower.hasPrefix("rtsps://")
+                    if let streamURL = URL(string: urlLine), accepted {
                         let channel = parseExtInf(line, streamURL: streamURL)
                         channels.append(channel)
                     }

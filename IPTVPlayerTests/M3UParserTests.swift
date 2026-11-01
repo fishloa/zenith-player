@@ -179,4 +179,25 @@ final class M3UParserTests: XCTestCase {
         XCTAssertEqual(PlaylistService.requestURL(for: URL(string: "https://tv.example/playlist.m3u?format=hls")!).absoluteString,
                        "https://tv.example/playlist.m3u?format=hls")
     }
+
+    func testParsesRtspEntry() {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1 tvg-id="cam1" tvg-name="Cam 1",Cam 1
+        rtsp://example.com/live/cam1
+        """
+        let channels = M3UParser.parse(m3u)
+        XCTAssertEqual(channels.count, 1)
+        XCTAssertEqual(channels[0].streamURL, URL(string: "rtsp://example.com/live/cam1")!)
+    }
+
+    func testDropsFtpEntry() {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1 tvg-id="x" tvg-name="X",X
+        ftp://example.com/file.ts
+        """
+        let channels = M3UParser.parse(m3u)
+        XCTAssertTrue(channels.isEmpty)
+    }
 }

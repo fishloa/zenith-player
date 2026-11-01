@@ -1,10 +1,12 @@
 import Foundation
+import Network
 
 final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
     private let queue: DispatchQueue
     private let onResponse: (UInt32, Int, [(String, String)]) -> Void
     private let onData: (UInt32, Data) -> Void
     private let onClosed: (UInt32, String?) -> Void
+    private let onConnected: (UInt32) -> Void
 
     private var session: URLSession!
     private var tasks: [UInt32: URLSessionDataTask] = [:]
@@ -12,14 +14,20 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
     private var reported: Set<UInt32> = []
     private var endedByChallenge: Set<UInt32> = []
 
+    private var connections: [UInt32: NWConnection] = [:]
+    private var tcpClosed: Set<UInt32> = []
+    var tcpConnectionCount: Int { connections.count }
+
     init(queue: DispatchQueue,
          onResponse: @escaping (UInt32, Int, [(String, String)]) -> Void,
          onData: @escaping (UInt32, Data) -> Void,
-         onClosed: @escaping (UInt32, String?) -> Void) {
+         onClosed: @escaping (UInt32, String?) -> Void,
+         onConnected: @escaping (UInt32) -> Void) {
         self.queue = queue
         self.onResponse = onResponse
         self.onData = onData
         self.onClosed = onClosed
+        self.onConnected = onConnected
         let cfg = URLSessionConfiguration.ephemeral
         cfg.httpCookieAcceptPolicy = .always
         cfg.urlCache = nil
@@ -51,10 +59,89 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
         task.resume()
     }
 
+    func connect(conn: UInt32, host: String, port: UInt16, tls: Bool) {
+        if let existing = connections[conn] {
+            existing.cancel()
+        }
+        tcpClosed.remove(conn)
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else {
+            onClosed(conn, "bad port")
+            return
+        }
+        let params: NWParameters = tls ? .tls : .tcp
+        let connection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: params)
+        connections[conn] = connection
+
+        connection.stateUpdateHandler = { [weak self] state in
+            guard let self else { return }
+            guard self.connections[conn] === connection else { return }
+            switch state {
+            case .ready:
+                guard !self.tcpClosed.contains(conn) else { return }
+                self.onConnected(conn)
+                self.receive(conn: conn, connection: connection)
+            case .failed(let error):
+                guard !self.tcpClosed.contains(conn) else {
+                    connection.cancel()
+                    return
+                }
+                self.tcpClosed.insert(conn)
+                connection.cancel()
+                self.onClosed(conn, error.localizedDescription)
+            case .waiting(let error):
+                guard !self.tcpClosed.contains(conn) else {
+                    connection.cancel()
+                    return
+                }
+                self.tcpClosed.insert(conn)
+                connection.cancel()
+                self.onClosed(conn, error.localizedDescription)
+            case .cancelled:
+                self.connections.removeValue(forKey: conn)
+            default:
+                break
+            }
+        }
+        connection.start(queue: queue)
+    }
+
+    private func receive(conn: UInt32, connection: NWConnection) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, error in
+            guard let self else { return }
+            guard self.connections[conn] === connection else { return }
+            guard !self.tcpClosed.contains(conn) else { return }
+            if let data, !data.isEmpty {
+                self.onData(conn, data)
+            }
+            if isComplete {
+                self.tcpClosed.insert(conn)
+                connection.cancel()
+                self.onClosed(conn, nil)
+                return
+            }
+            if let error {
+                self.tcpClosed.insert(conn)
+                connection.cancel()
+                self.onClosed(conn, error.localizedDescription)
+                return
+            }
+            self.receive(conn: conn, connection: connection)
+        }
+    }
+
+    func send(conn: UInt32, bytes: Data) {
+        guard let connection = connections[conn] else { return }
+        connection.send(content: bytes, completion: .contentProcessed { _ in })
+    }
+
     func cancel(conn: UInt32) {
         tasks[conn]?.cancel()
         if let t = tasks.removeValue(forKey: conn) {
             reverse.removeValue(forKey: ObjectIdentifier(t))
+        }
+        tcpClosed.insert(conn)
+        if let c = connections[conn] {
+            c.cancel()
         }
     }
 
@@ -62,6 +149,8 @@ final class TransportHost: NSObject, URLSessionDataDelegate, Transport {
         for t in tasks.values { t.cancel() }
         tasks.removeAll()
         reverse.removeAll()
+        for conn in connections.keys { tcpClosed.insert(conn) }
+        for c in connections.values { c.cancel() }
         session.invalidateAndCancel()
     }
 

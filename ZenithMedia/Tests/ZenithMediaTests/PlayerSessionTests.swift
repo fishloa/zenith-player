@@ -109,6 +109,22 @@ final class PlayerSessionTests: XCTestCase {
         XCTAssertEqual(attempts, attempts.sorted(), "\(attempts)")
     }
 
+    func testReconnectAttemptNeverDecreasesSampledFast() async throws {
+        let s = try LoopbackHTTPServer { _ in TestResponse(status: 503) }
+        defer { s.stop() }
+        var p = fast
+        p.startTimeout = 3
+        let c = PlayerController(renderer: Renderer(audioOutput: false), policy: p, isInterlaced: { _ in false })
+        c.play(url: try await s.baseURL().appendingPathComponent("stream.ts"))
+        var attempts: [Int] = []
+        let end = Date().addingTimeInterval(10)
+        while Date() < end {
+            if case .reconnecting(let n) = c.phase { attempts.append(n) }
+            try await Task.sleep(for: .milliseconds(2))
+        }
+        XCTAssertEqual(attempts, attempts.sorted(), "\(attempts)")
+    }
+
     func testStreamAuthFailureIsReported() async throws {
         let s = try LoopbackHTTPServer { _ in TestResponse(status: 401, headers: ["WWW-Authenticate": #"Basic realm="tv""#]) }
         defer { s.stop() }
@@ -195,7 +211,7 @@ final class PlayerSessionTests: XCTestCase {
 
     func testRTSPFails() async throws {
         let c = controller()
-        c.play(url: URL(string: "rtsp://127.0.0.1:1/x")!)
+        c.play(url: URL(string: "rtmp://127.0.0.1:1/x")!)
         let failed = await waitFor(c, timeout: 2) { $0 == .failed }
         XCTAssertTrue(failed, "phase \(c.phase)")
         c.stop()
