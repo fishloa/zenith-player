@@ -458,6 +458,7 @@ pub unsafe extern "C" fn zm_session_poll_action(
                 url,
                 headers,
                 byte_range,
+                ..
             } => {
                 let mut hs = String::new();
                 for (k, v) in &headers {
@@ -520,7 +521,7 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     bytes: None,
                 };
             }
-            broadcast_client::Action::TcpConnect { conn, host, port, tls } => {
+            broadcast_client::Action::TcpConnect { conn, host, port, tls, .. } => {
                 break HeldAction {
                     method: None,
                     url: None,
