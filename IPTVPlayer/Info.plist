@@ -25,6 +25,12 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_zenith._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Zenith Player looks for Zenith TV servers on your home network.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

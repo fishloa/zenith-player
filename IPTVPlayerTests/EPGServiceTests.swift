@@ -1,6 +1,8 @@
 import XCTest
+import Observation
 @testable import IPTVPlayer
 
+@MainActor
 final class EPGServiceTests: XCTestCase {
 
     func testDecodeEPGEvent() throws {
@@ -126,24 +128,39 @@ final class EPGServiceTests: XCTestCase {
         XCTAssertTrue(service.upcomingEvents(for: nil as String?).isEmpty)
     }
 
-    func testSignInOnUnauthorizedAndClearsOnSuccess() async throws {
-        final class Gate: @unchecked Sendable { var open = false; let lock = NSLock() }
-        let gate = Gate()
-        let server = try TestHTTPServer { _ in
-            gate.lock.lock(); let open = gate.open; gate.lock.unlock()
-            if !open {
-                return TestResponse(status: 401, headers: ["WWW-Authenticate": #"Basic realm="tv""#])
-            }
-            return TestResponse(status: 200, body: Data("<tv></tv>".utf8))
-        }
+    func testLoadPublishesChangesOnMainThread() async throws {
+        let xml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <tv>
+          <programme start="20261018190000 +0200" stop="20261018194500 +0200" channel="tf-1">
+            <title>Test</title>
+          </programme>
+        </tv>
+        """.data(using: .utf8)!
+        let server = try TestHTTPServer { _ in TestResponse(status: 200, body: xml) }
         defer { server.stop() }
         let base = try await server.baseURL()
         let url = base.appendingPathComponent("guide.xml")
         let service = EPGService(fetcher: AuthorizedFetcher(credentials: CredentialStore(secrets: InMemorySecretStore())))
-        await service.load(from: url)
-        XCTAssertEqual(service.signIn?.origin, Origin(url))
-        gate.lock.lock(); gate.open = true; gate.lock.unlock()
-        await service.load(from: url)
-        XCTAssertNil(service.signIn)
+
+        let expectation = expectation(description: "events changed")
+        let flag = MainThreadFlag()
+        let fulfilled = MainThreadFlag()
+        withObservationTracking {
+            _ = service.eventsBySlug
+        } onChange: {
+            flag.value = Thread.isMainThread
+            if fulfilled.value != true {
+                fulfilled.value = true
+                expectation.fulfill()
+            }
+        }
+
+        await Task.detached {
+            await service.load(from: url)
+        }.value
+
+        await fulfillment(of: [expectation], timeout: 5)
+        XCTAssertTrue(flag.value == true)
     }
 }

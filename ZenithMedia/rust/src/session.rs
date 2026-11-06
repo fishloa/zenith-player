@@ -5,12 +5,14 @@ use transmux::TrackSpec;
 
 use crate::demux::{Converter, Event as DemuxEvent};
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Buffer {
     Start { at_27mhz: u64 },
     Pause { hold_at_27mhz: u64, starving_track: Option<u32>, reason: u32 },
     Resume { at_27mhz: u64 },
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum ClientEvent {
     Media(crate::demux::Event),
     Status(broadcast_client::Status),
@@ -22,6 +24,11 @@ pub enum ClientEvent {
     },
     AuthRejected(u16),
     Forbidden(u16),
+    ServerRefused {
+        status: u16,
+        retry_after_us: Option<u64>,
+        reason: Option<String>,
+    },
     Error {
         name: String,
         fatal: bool,
@@ -314,6 +321,13 @@ impl Client {
                     fatal,
                 });
             }
+            BcEvent::ServerRefused { status, retry_after_us, reason } => {
+                self.pending.push_back(ClientEvent::ServerRefused {
+                    status,
+                    retry_after_us,
+                    reason,
+                });
+            }
             _ => {}
         }
     }
@@ -442,6 +456,32 @@ mod tests {
         let c = client_config(3_000_000);
         let p = &c.buffer.policy;
         assert_eq!(p.initial_us, 3_000_000.clamp(p.min_us, p.max_us));
+    }
+
+    #[test]
+    fn server_refused_carries_reason() {
+        let mut c = Client::open("http://h/stream/ts/orf1", 0).unwrap();
+        let (conn, _, _) = first_request(&mut c);
+        c.on_response(conn, 503, &[
+            ("Content-Type".into(), "text/plain; charset=utf-8".into()),
+            ("Retry-After".into(), "30".into()),
+            ("Content-Length".into(), "40".into()),
+        ], 0);
+        c.on_data(conn, b"descrambler busy: all 4 CAM slots in use", 0);
+        c.on_closed(conn, None, 0);
+        let mut refused = Vec::new();
+        loop {
+            while let Some(e) = c.poll_event() {
+                if let ClientEvent::ServerRefused { .. } = e { refused.push(e); }
+            }
+            if !refused.is_empty() { break; }
+            if c.poll_action(0).is_none() { break; }
+        }
+        assert_eq!(refused, vec![ClientEvent::ServerRefused {
+            status: 503,
+            retry_after_us: Some(30_000_000),
+            reason: Some("descrambler busy: all 4 CAM slots in use".to_string()),
+        }]);
     }
 
     #[test]

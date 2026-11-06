@@ -173,6 +173,41 @@ final class PlayerSessionTests: XCTestCase {
         c.stop()
     }
 
+    func testServerRefusalReasonIsShownThenCleared() async throws {
+        let bytes = try Fixtures.data("streams/tf-1.ts")
+        let counter = RequestCounter()
+        let s = try LoopbackHTTPServer { _ in
+            let n = counter.increment()
+            if n == 1 {
+                return TestResponse(status: 503, headers: ["Content-Type": "text/plain; charset=utf-8", "Retry-After": "2"], body: Data("descrambler busy: all 4 CAM slots in use".utf8))
+            }
+            return TestResponse(status: 200, headers: ["Content-Type": "video/mp2t"], body: bytes)
+        }
+        defer { s.stop() }
+        let c = controller()
+        let url = try await s.baseURL().appendingPathComponent("stream.ts")
+        c.play(url: url)
+        let shownDeadline = Date().addingTimeInterval(5)
+        var shown = false
+        while Date() < shownDeadline {
+            if let refusal = c.serverRefusal,
+               refusal.reason == "descrambler busy: all 4 CAM slots in use",
+               let retryAt = refusal.retryAt {
+                let now = Date()
+                if retryAt > now.addingTimeInterval(0.5) && retryAt < now.addingTimeInterval(2.5) {
+                    shown = true
+                    break
+                }
+            }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(shown, "server refusal not shown, phase \(c.phase), refusal \(String(describing: c.serverRefusal))")
+        let playing = await waitFor(c, timeout: 15) { $0 == .playing }
+        XCTAssertTrue(playing, "phase \(c.phase)")
+        XCTAssertNil(c.serverRefusal)
+        c.stop()
+    }
+
     func testHLSVODLoops() async throws {
         let bytes = try Fixtures.data("streams/tf-1.ts")
         let vodBytes = bytes.prefix(188 * 6000)

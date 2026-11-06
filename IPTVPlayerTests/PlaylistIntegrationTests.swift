@@ -11,6 +11,7 @@ enum LiveServer {
     }
 }
 
+@MainActor
 final class PlaylistIntegrationTests: XCTestCase {
 
     private var playlistURL: URL!

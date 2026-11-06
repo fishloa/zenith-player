@@ -44,6 +44,7 @@ public enum ClientEvent: Sendable {
     case buffer(BufferEvent)
     case variants(chosen: Int, lines: [String])
     case error(name: String, fatal: Bool)
+    case serverRefused(status: Int, retryAfter: TimeInterval?, reason: String?)
 }
 
 public enum SessionAction: Sendable {
@@ -296,6 +297,11 @@ final class ZMSession {
         case UInt32(ZM_EV_ERROR):
             let name = ev.text != nil ? String(cString: ev.text!) : ""
             return .error(name: name, fatal: ev.status != 0)
+        case UInt32(ZM_EV_SERVER_REFUSED):
+            let status = Int(ev.http_status)
+            let retryAfter: TimeInterval? = ev.status_value == 0 ? nil : Double(ev.status_value) / 1e6
+            let reason = ev.text != nil ? String(cString: ev.text!) : nil
+            return .serverRefused(status: status, retryAfter: retryAfter, reason: reason)
         default:
             return nil
         }

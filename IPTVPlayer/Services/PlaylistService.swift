@@ -7,7 +7,7 @@ struct SignInRequest: Equatable {
     let rejected: Bool
 }
 
-@Observable
+@MainActor @Observable
 final class PlaylistService {
 
     private(set) var channels: [Channel] = []
@@ -21,13 +21,19 @@ final class PlaylistService {
 
     private let settingsStore: SettingsStore
     private let fetcher: AuthorizedFetcher
+    private let retryDelay: Duration
+    private var retryTask: Task<Void, Never>?
 
-    init(settingsStore: SettingsStore, fetcher: AuthorizedFetcher = .shared) {
+    init(settingsStore: SettingsStore, fetcher: AuthorizedFetcher = .shared, retryDelay: Duration = .seconds(30)) {
         self.settingsStore = settingsStore
         self.fetcher = fetcher
+        self.retryDelay = retryDelay
     }
 
     func loadPlaylist() async {
+        retryTask?.cancel()
+        retryTask = nil
+
         errorMessage = nil
         signIn = nil
         needsSetup = !settingsStore.isConfigured
@@ -53,6 +59,18 @@ final class PlaylistService {
             errorMessage = "This server does not allow access."
             channels = []
             guideURL = nil
+        } catch FetchError.http(let status) {
+            errorMessage = "The server returned an error (HTTP \(status))."
+            channels = []
+            guideURL = nil
+            if status >= 500 || status == 408 || status == 429 {
+                scheduleRetry()
+            }
+        } catch let urlError as URLError {
+            errorMessage = urlError.localizedDescription
+            channels = []
+            guideURL = nil
+            scheduleRetry()
         } catch {
             errorMessage = error.localizedDescription
             channels = []
@@ -60,6 +78,21 @@ final class PlaylistService {
         }
 
         isLoading = false
+    }
+
+    private func scheduleRetry() {
+        retryTask?.cancel()
+        retryTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await Task.sleep(for: self.retryDelay)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            self.retryTask = nil
+            await self.loadPlaylist()
+        }
     }
 
     private func fetchPlaylistText() async throws -> String {
@@ -76,7 +109,7 @@ final class PlaylistService {
     /// The player plays raw MPEG-TS only, so ask for TS stream URLs:
     /// zenith hands out HLS (m3u8) to clients outside the LAN otherwise.
     /// An explicit format in the configured URL is left alone.
-    static func requestURL(for url: URL) -> URL {
+    nonisolated static func requestURL(for url: URL) -> URL {
         guard var c = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
         var items = c.queryItems ?? []
         guard !items.contains(where: { $0.name == "format" }) else { return url }

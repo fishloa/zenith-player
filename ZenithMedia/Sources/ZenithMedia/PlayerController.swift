@@ -176,6 +176,11 @@ public struct PlayerStats: Sendable {
 
 private let log = Logger(subsystem: "zenithmedia", category: "player")
 
+public struct ServerRefusal: Equatable, Sendable {
+    public let reason: String?
+    public let retryAt: Date?
+}
+
 /// Owns one playback: source → demux → decode/deinterlace → renderer.
 /// All pipeline work runs on `work`; state is published on the main actor.
 /// Every start-up gets a new `generation`; work tagged with an older
@@ -183,6 +188,7 @@ private let log = Logger(subsystem: "zenithmedia", category: "player")
 @MainActor @Observable
 public final class PlayerController {
     public private(set) var phase: PlayerPhase = .loading
+    public private(set) var serverRefusal: ServerRefusal?
     public private(set) var stats = PlayerStats()
     /// Output frame rate once known; changes rarely (views can observe it
     /// without redrawing on every stats update).
@@ -249,6 +255,7 @@ public final class PlayerController {
         currentURL = nil
         currentCredential = nil
         chosenAudioTrack = nil; audioTracks = []; playingAudioTrack = nil
+        serverRefusal = nil
         let gen = generation
         let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
                             isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
@@ -269,6 +276,7 @@ public final class PlayerController {
         currentURL = url
         currentCredential = credential
         chosenAudioTrack = nil; audioTracks = []; playingAudioTrack = nil
+        serverRefusal = nil
         let gen = generation
         let pipe = Pipeline(renderer: renderer, policy: policy, chooseAudio: chooseAudio,
                             isInterlaced: isInterlaced, topFieldFirst: topFieldFirst, makeDecoder: makeVideoDecoder, queue: work,
@@ -302,6 +310,7 @@ public final class PlayerController {
         task = nil
         renderer.endSession()
         phase = .loading
+        serverRefusal = nil
     }
 
     private func startMonitoring(pipe: Pipeline, gen: Int, source: ClientSource) {
@@ -343,6 +352,7 @@ public final class PlayerController {
                     }
                 }
                 let status = pipe.sessionStatusValue
+                if pipe.sessionRefusalValue != self.serverRefusal { self.serverRefusal = pipe.sessionRefusalValue }
                 if status == .notFound { self.phase = .failed; continue }
                 if status == .waitingForCredentials { self.phase = .needsCredentials(host: authHost ?? ""); continue }
                 if status == .ended, !pipe.sessionFiniteValue, played, s.state != .running || s.stats.bufferedSeconds < 0.05 {
@@ -362,6 +372,7 @@ public final class PlayerController {
                 case .running:
                     played = true; waitStart = nil; reconnects = 0
                     if self.phase != .playing { self.phase = .playing }
+                    if self.serverRefusal != nil { self.serverRefusal = nil }
                 case .noVideo:
                     self.phase = .failed
                     pipe.abort()
@@ -492,6 +503,7 @@ final class Pipeline: @unchecked Sendable {
     private var pubHasVideo = false
     private var pubStatus: SessionStatus?
     private var pubAuth: ClientEvent?
+    private var pubRefusal: ServerRefusal?
     private var pubFinite = false
     private var firstTrackAt: Date?
     private var _aborted = false
@@ -587,7 +599,7 @@ final class Pipeline: @unchecked Sendable {
             for ev in events {
                 switch ev {
                 case .media(let de):
-                    self.lock.lock(); self.pubAuth = nil; self.lock.unlock()
+                    self.lock.lock(); self.pubAuth = nil; self.pubRefusal = nil; self.lock.unlock()
                     self.handle(de)
                 case .buffer(let be):
                     switch be {
@@ -602,6 +614,8 @@ final class Pipeline: @unchecked Sendable {
                     break
                 case .status(let s):
                     self.lock.lock(); self.pubStatus = s; self.lock.unlock()
+                case .serverRefused(_, let retryAfter, let reason):
+                    self.lock.lock(); self.pubRefusal = ServerRefusal(reason: reason, retryAt: retryAfter.map { Date().addingTimeInterval($0) }); self.lock.unlock()
                 case .authRequired, .authRejected, .forbidden, .error(_, fatal: true):
                     self.lock.lock(); self.pubAuth = ev; self.lock.unlock()
                 case .finite:
@@ -615,6 +629,9 @@ final class Pipeline: @unchecked Sendable {
 
     var sessionStatusValue: SessionStatus? {
         lock.lock(); defer { lock.unlock() }; return pubStatus
+    }
+    var sessionRefusalValue: ServerRefusal? {
+        lock.lock(); defer { lock.unlock() }; return pubRefusal
     }
     var sessionAuthEvent: ClientEvent? {
         lock.lock(); defer { lock.unlock() }; return pubAuth

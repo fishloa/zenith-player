@@ -8,13 +8,14 @@ struct CountrySelectionView: View {
     var epgService: EPGService
 
     @State private var showSettings = false
+    @State private var path: [String] = []
     @State private var launchChannel: Channel?
     @State private var launchChannelShown = false
+    @State private var launchGroupShown = false
 
-    private static let launchChannelID: String? = {
-        let args = ProcessInfo.processInfo.arguments
-        return args.firstIndex(of: "-zenithPlayChannel").flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil }
-    }()
+    private static let launchChannelID: String? = LaunchArguments.value(after: "-zenithPlayChannel")
+
+    private static let launchGroupID: String? = LaunchArguments.value(after: "-zenithOpenGroup")
 
     private var groups: [String] {
         var seen = Set<String>()
@@ -30,7 +31,7 @@ struct CountrySelectionView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if playlistService.isLoading {
                     ProgressView("Loading channels...")
@@ -63,15 +64,7 @@ struct CountrySelectionView: View {
                 } else {
                     HStack(spacing: 80) {
                         ForEach(groups, id: \.self) { group in
-                            NavigationLink {
-                                ChannelGridView(
-                                    channels: channels(for: group),
-                                    settingsStore: settingsStore,
-                                    playlistService: playlistService,
-                                    title: group,
-                                    epgService: epgService
-                                )
-                            } label: {
+                            NavigationLink(value: group) {
                                 VStack(spacing: 20) {
                                     Text(flag(for: group))
                                         .font(.system(size: 120))
@@ -84,6 +77,15 @@ struct CountrySelectionView: View {
                         }
                     }
                 }
+            }
+            .navigationDestination(for: String.self) { group in
+                ChannelGridView(
+                    channels: channels(for: group),
+                    settingsStore: settingsStore,
+                    playlistService: playlistService,
+                    title: group,
+                    epgService: epgService
+                )
             }
             .navigationTitle("Zenith Player")
             .toolbar {
@@ -100,6 +102,10 @@ struct CountrySelectionView: View {
             if !launchChannelShown, let id = Self.launchChannelID, ids.contains(id) {
                 launchChannelShown = true
                 launchChannel = playlistService.channels.first { $0.id == id }
+            }
+            if !launchGroupShown, let group = Self.launchGroupID, groups.contains(group) {
+                launchGroupShown = true
+                path = [group]
             }
         }
         .fullScreenCover(item: $launchChannel) { channel in

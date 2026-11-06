@@ -358,6 +358,11 @@ impl HeldEvent {
         if let session::ClientEvent::Error { name, .. } = &h.client_event {
             h.text = CString::new(name.clone()).ok();
         }
+        if let session::ClientEvent::ServerRefused { reason, .. } = &h.client_event {
+            if let Some(r) = reason {
+                h.text = CString::new(r.clone()).ok();
+            }
+        }
         h
     }
 }
@@ -688,6 +693,15 @@ fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
         session::ClientEvent::Error { name: _, fatal } => {
             out.kind = 15;
             out.status = if *fatal { 1 } else { 0 };
+            out.text = held
+                .text
+                .as_ref()
+                .map_or(std::ptr::null(), |c| c.as_ptr());
+        }
+        session::ClientEvent::ServerRefused { status, retry_after_us, .. } => {
+            out.kind = 16;
+            out.http_status = *status;
+            out.status_value = retry_after_us.unwrap_or(0);
             out.text = held
                 .text
                 .as_ref()

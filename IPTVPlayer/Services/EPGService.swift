@@ -7,7 +7,7 @@ private let kRefreshInterval: TimeInterval = 30 * 60  // 30 minutes
 /// If data is older than this when the overlay opens, fetch immediately.
 private let kStaleThreshold: TimeInterval = 60 * 60   // 60 minutes
 
-@Observable
+@MainActor @Observable
 final class EPGService {
     private(set) var eventsBySlug: [String: [EPGEvent]] = [:]
     private(set) var isLoading = false
@@ -85,13 +85,16 @@ final class EPGService {
 
         do {
             let (data, _) = try await fetcher.data(from: url)
-            let events = try XMLTVParser.events(from: data)
-            var grouped: [String: [EPGEvent]] = [:]
-            for event in events { grouped[event.serviceSlug, default: []].append(event) }
+            let (count, grouped) = try await Task.detached(priority: .userInitiated) {
+                let events = try XMLTVParser.events(from: data)
+                var grouped: [String: [EPGEvent]] = [:]
+                for event in events { grouped[event.serviceSlug, default: []].append(event) }
+                return (events.count, grouped)
+            }.value
             eventsBySlug = grouped
             lastFetchDate = .now
             signIn = nil
-            print("[EPG] loaded \(events.count) events for \(grouped.count) channels")
+            print("[EPG] loaded \(count) events for \(grouped.count) channels")
         } catch FetchError.unauthorized(let challenge, let origin, let rejected) {
             signIn = SignInRequest(origin: origin, challenge: challenge, rejected: rejected)
         } catch {

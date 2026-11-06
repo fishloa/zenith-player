@@ -124,9 +124,22 @@ struct PlayerView: View {
                 VStack(spacing: 20) {
                     ProgressView()
                         .scaleEffect(2)
-                    Text("Reconnecting… (attempt \(attempt))")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+                    if let refusal = player.serverRefusal {
+                        Text(refusal.reason.map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? "Server busy")
+                            .font(.headline)
+                        if let retryAt = refusal.retryAt {
+                            TimelineView(.periodic(from: .now, by: 1)) { context in
+                                let remaining = max(0, Int(ceil(retryAt.timeIntervalSince(context.date))))
+                                Text("Retrying in \(remaining) s")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } else {
+                        Text("Reconnecting… (attempt \(attempt))")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             case .needsCredentials(let host):
                 VStack(spacing: 20) {

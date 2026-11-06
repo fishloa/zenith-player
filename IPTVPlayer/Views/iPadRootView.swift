@@ -8,10 +8,14 @@ struct iPadRootView: View {
     var epgService: EPGService
 
     @State private var showSettings = false
+    @State private var path: [String] = []
+    @State private var launchGroupShown = false
 
     #if os(macOS)
     @State private var selectedGroup: String?
     #endif
+
+    private static let launchGroupID: String? = LaunchArguments.value(after: "-zenithOpenGroup")
 
     private var groups: [String] {
         var seen = Set<String>()
@@ -59,18 +63,10 @@ struct iPadRootView: View {
         )
         #else
         rootModifiers(
-            NavigationStack {
+            NavigationStack(path: $path) {
                 withPlaceholder {
                     List(groups, id: \.self) { group in
-                        NavigationLink {
-                            ChannelGridView(
-                                channels: channels(for: group),
-                                settingsStore: settingsStore,
-                                playlistService: playlistService,
-                                title: group,
-                                epgService: epgService
-                            )
-                        } label: {
+                        NavigationLink(value: group) {
                             Label {
                                 Text(group)
                                     .font(.title3)
@@ -91,6 +87,21 @@ struct iPadRootView: View {
                         } label: {
                             Image(systemName: "gear")
                         }
+                    }
+                }
+                .navigationDestination(for: String.self) { group in
+                    ChannelGridView(
+                        channels: channels(for: group),
+                        settingsStore: settingsStore,
+                        playlistService: playlistService,
+                        title: group,
+                        epgService: epgService
+                    )
+                }
+                .onChange(of: playlistService.channels.map(\.id)) { _, _ in
+                    if !launchGroupShown, let group = Self.launchGroupID, groups.contains(group) {
+                        launchGroupShown = true
+                        path = [group]
                     }
                 }
             }
