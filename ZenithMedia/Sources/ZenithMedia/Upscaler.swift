@@ -98,7 +98,8 @@ public final class Upscaler: @unchecked Sendable {
     /// A spatial scaler plus its output-sized colour texture. The colour
     /// texture is allocated once per size and reused.
     private final class Scaler {
-        let scaler: MTLFXSpatialScaler
+        let encode: (_ color: MTLTexture, _ output: MTLTexture, _ cmd: MTLCommandBuffer) -> Void
+        @available(tvOS 27.1, *)
         init?(_ key: Key, device: MTLDevice) {
             let d = MTLFXSpatialScalerDescriptor()
             d.inputWidth = key.w
@@ -109,7 +110,11 @@ public final class Upscaler: @unchecked Sendable {
             d.outputTextureFormat = .rgba16Float
             d.colorProcessingMode = .perceptual
             guard let s = d.makeSpatialScaler(device: device) else { return nil }
-            scaler = s
+            encode = { color, output, cmd in
+                s.colorTexture = color
+                s.outputTexture = output
+                s.encode(commandBuffer: cmd)
+            }
         }
     }
 
@@ -138,7 +143,8 @@ public final class Upscaler: @unchecked Sendable {
 
     /// nil when MetalFX spatial scaling is not available on this device.
     public init?() {
-        guard let device = MTLCreateSystemDefaultDevice(),
+        guard #available(tvOS 27.1, *),
+              let device = MTLCreateSystemDefaultDevice(),
               MTLFXSpatialScalerDescriptor.supportsDevice(device),
               let queue = device.makeCommandQueue() else { return nil }
         var cache: CVMetalTextureCache?
@@ -235,9 +241,7 @@ public final class Upscaler: @unchecked Sendable {
         var params = Params(c0: SIMD4(color.matrix.rawValue, color.transfer.rawValue, color.fullRange ? 1 : 0, 1))
 
         compute(convertFn, cmd: cmd, textures: [inLuma, inChroma, colorTexture], params: &params, size: (sw, sh))
-        scaler.scaler.colorTexture = colorTexture
-        scaler.scaler.outputTexture = scaled
-        scaler.scaler.encode(commandBuffer: cmd)
+        scaler.encode(colorTexture, scaled, cmd)
         compute(storeFn, cmd: cmd, textures: [scaled, outLuma], params: &params, size: (ow, oh))
         compute(chromaFn, cmd: cmd, textures: [scaled, outChroma], params: &params, size: (ow / 2, oh / 2))
 
@@ -284,7 +288,7 @@ public final class Upscaler: @unchecked Sendable {
 
     private func scaler(for key: Key) -> Scaler? {
         if let s = scalers[key] { return s }
-        guard let s = Scaler(key, device: device) else { return nil }
+        guard #available(tvOS 27.1, *), let s = Scaler(key, device: device) else { return nil }
         if scalers.count >= 4 { scalers.removeAll(keepingCapacity: true) }
         scalers[key] = s
         return s
