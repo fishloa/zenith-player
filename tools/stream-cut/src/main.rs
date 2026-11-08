@@ -104,7 +104,7 @@ fn main() {
             None => false,
         });
         kept.push(serde_json::json!({
-            "track": t.spec.track_id,
+            "track": t.spec.track_id.value(),
             "codec": codec_name(&t.spec.config),
             "kept": t.samples.len(),
             "of": before,
