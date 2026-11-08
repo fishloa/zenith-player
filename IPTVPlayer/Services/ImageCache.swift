@@ -4,7 +4,6 @@ import AppKit
 import UIKit
 #endif
 import CryptoKit
-import SVGKit
 
 actor ImageCache {
     static let shared: ImageCache = {
@@ -17,12 +16,6 @@ actor ImageCache {
         let c = NSCache<NSString, PlatformImage>()
         c.countLimit = 200
         c.totalCostLimit = 50 * 1024 * 1024
-        return c
-    }()
-
-    private let svgCache: NSCache<NSString, SVGKImage> = {
-        let c = NSCache<NSString, SVGKImage>()
-        c.countLimit = 100
         return c
     }()
 
@@ -62,17 +55,8 @@ actor ImageCache {
         }
     }
 
-    func svgImage(for url: URL) -> SVGKImage? {
-        svgCache.object(forKey: url.absoluteString as NSString)
-    }
-
-    func store(_ svg: SVGKImage, for url: URL) {
-        svgCache.setObject(svg, forKey: url.absoluteString as NSString)
-    }
-
     func clear() {
         rasterCache.removeAllObjects()
-        svgCache.removeAllObjects()
         try? FileManager.default.removeItem(at: directory)
     }
 

@@ -52,7 +52,7 @@
 		1E47475906BE7769F77F3124 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750CE7B49E643D6B5271416B /* Auth.swift */; };
 		BF1D2EF4BD1C8313F1935C1D /* ZenithDiscoveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD00C1D28900805E2FB42D9 /* ZenithDiscoveryServiceTests.swift */; };
 		2896EC0B729A3056F0177AA4 /* ImageCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CD9218F001821DF3A85C12 /* ImageCacheTests.swift */; };
-		DA796AF72DB72189792B2FFF /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = 647E9D55930FCE870B7B9264 /* SVGKit */; };
+		DA796AF72DB72189792B2FFF /* SwiftDraw in Frameworks */ = {isa = PBXBuildFile; productRef = 647E9D55930FCE870B7B9264 /* SwiftDraw */; };
 		DDA550614CA8E626B8EF401A /* EPGServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B93F799E86C14CD78507DABC /* EPGServiceTests.swift */; };
 		EEBCA48DEBD612A2CD860982 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231EE19D96369980B913835A /* ImageCache.swift */; };
 		EE2EA8CD7E839D6E64974627 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A28781F9DC52B039328895 /* PlayerView.swift */; };
@@ -63,7 +63,6 @@
 		B5C6D7E8F9A0B5C6D7E8F9A0 /* TopShelf@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A5B6C7D8E9F0A5B6C7D8E9F0 /* TopShelf@2x.png */; };
 		B6C7D8E9F0A1B6C7D8E9F0A1 /* TopShelfWide.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B7C8D9E0F1A6B7C8D9E0F1 /* TopShelfWide.png */; };
 		B7C8D9E0F1A2B7C8D9E0F1A2 /* TopShelfWide@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A7B8C9D0E1F2A7B8C9D0E1F2 /* TopShelfWide@2x.png */; };
-		OBJC004OBJC004OBJC004OBJC /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */; };
 		IPAD_BF01IPAD_BF01IPAD_BF0 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7CCF45B5DA412002EE99B4 /* Channel.swift */; };
 		IPAD_BF02IPAD_BF02IPAD_BF0 /* EPGEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */; };
 		IPAD_BF03IPAD_BF03IPAD_BF0 /* EPGService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808D81D527C6587AD99E82BD /* EPGService.swift */; };
@@ -90,9 +89,8 @@
 		IPAD_BF16IPAD_BF16IPAD_BF1 /* IPTVPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */; };
 		IPAD_BF17IPAD_BF17IPAD_BF1 /* PlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */; };
 		IPAD_BF18IPAD_BF18IPAD_BF1 /* iPadRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */; };
-		IPAD_BF19IPAD_BF19IPAD_BF1 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */; };
 		IPAD_BF20IPAD_BF20IPAD_BF2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */; };
-		IPAD_BF22IPAD_BF22IPAD_BF2 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = IPAD_PD01IPAD_PD01IPAD_PD0 /* SVGKit */; };
+		IPAD_BF22IPAD_BF22IPAD_BF2 /* SwiftDraw in Frameworks */ = {isa = PBXBuildFile; productRef = IPAD_PD01IPAD_PD01IPAD_PD0 /* SwiftDraw */; };
 		IPAD_BF23IPAD_BF23IPAD_BF2 /* ZenithMedia in Frameworks */ = {isa = PBXBuildFile; productRef = IPAD_PD02IPAD_PD02IPAD_PD0 /* ZenithMedia */; };
 		MAC_BF01MAC_BF01MAC_BF01 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7CCF45B5DA412002EE99B4 /* Channel.swift */; };
 		MAC_BF02MAC_BF02MAC_BF02 /* EPGEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB55ABBEF1981C4F2D67B55 /* EPGEvent.swift */; };
@@ -120,9 +118,8 @@
 		MAC_BF17MAC_BF17MAC_BF17 /* PlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */; };
 		MAC_BF18MAC_BF18MAC_BF18 /* iPadRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */; };
 		MAC_BF19MAC_BF19MAC_BF19 /* PlatformImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLATIMG_FR01PLATIMG_FR0 /* PlatformImage.swift */; };
-		MAC_BF20MAC_BF20MAC_BF20 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */; };
 		MAC_BF21MAC_BF21MAC_BF21 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E5F7 /* Assets.xcassets */; };
-		MAC_BF23MAC_BF23MAC_BF23 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = MAC_PD01MAC_PD01MAC_PD01 /* SVGKit */; };
+		MAC_BF23MAC_BF23MAC_BF23 /* SwiftDraw in Frameworks */ = {isa = PBXBuildFile; productRef = MAC_PD01MAC_PD01MAC_PD01 /* SwiftDraw */; };
 		MAC_BF24MAC_BF24MAC_BF24 /* ZenithMedia in Frameworks */ = {isa = PBXBuildFile; productRef = MAC_PD02MAC_PD02MAC_PD02 /* ZenithMedia */; };
 /* End PBXBuildFile section */
 
@@ -192,9 +189,6 @@
 		ED3EF3FD8893539D9F48E134 /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
 		FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVPlayerApp.swift; sourceTree = "<group>"; };
 		ZMVEEE001ZMVEEE001ZMVEEE0 /* PlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerLayerView.swift; sourceTree = "<group>"; };
-		OBJC001OBJC001OBJC001OBJC /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptionCatcher.h; sourceTree = "<group>"; };
-		OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptionCatcher.m; sourceTree = "<group>"; };
-		OBJC003OBJC003OBJC003OBJC /* IPTVPlayer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IPTVPlayer-Bridging-Header.h"; sourceTree = "<group>"; };
 		IPAD_FR01IPAD_FR01IPAD_FR0 /* iPadRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadRootView.swift; sourceTree = "<group>"; };
 		IPAD_FR02IPAD_FR02IPAD_FR0 /* ZenithTV-iPad.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ZenithTV-iPad.entitlements"; sourceTree = "<group>"; };
 		IPAD_FR03IPAD_FR03IPAD_FR0 /* Zenith Player iPad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zenith Player iPad.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -209,7 +203,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DA796AF72DB72189792B2FFF /* SVGKit in Frameworks */,
+				DA796AF72DB72189792B2FFF /* SwiftDraw in Frameworks */,
 				ZMVAAA001ZMVAAA001ZMVAAA0 /* ZenithMedia in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -218,7 +212,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				IPAD_BF22IPAD_BF22IPAD_BF2 /* SVGKit in Frameworks */,
+				IPAD_BF22IPAD_BF22IPAD_BF2 /* SwiftDraw in Frameworks */,
 				IPAD_BF23IPAD_BF23IPAD_BF2 /* ZenithMedia in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -227,7 +221,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				MAC_BF23MAC_BF23MAC_BF23 /* SVGKit in Frameworks */,
+				MAC_BF23MAC_BF23MAC_BF23 /* SwiftDraw in Frameworks */,
 				MAC_BF24MAC_BF24MAC_BF24 /* ZenithMedia in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -285,7 +279,6 @@
 				73D22CC7D414CEA989142B32 /* Info.plist */,
 				47CBDF3EDE418CE1A9D38E3A /* IPTVPlayer.entitlements */,
 				FB4C1453C4CEB5208A23EEE3 /* IPTVPlayerApp.swift */,
-				OBJC003OBJC003OBJC003OBJC /* IPTVPlayer-Bridging-Header.h */,
 				IPAD_FR02IPAD_FR02IPAD_FR0 /* ZenithTV-iPad.entitlements */,
 				MAC_FR01MAC_FR01MAC_FR01 /* ZenithTV-Mac.entitlements */,
 				MAC_FR02MAC_FR02MAC_FR02 /* Info-Mac.plist */,
@@ -346,8 +339,6 @@
 				D8B796922E9951A3D91AC771 /* SecretStore.swift */,
 				750CE7B49E643D6B5271416B /* Auth.swift */,
 				9F7D0714A57C439A8ED09316 /* ZenithDiscoveryService.swift */,
-				OBJC001OBJC001OBJC001OBJC /* ObjCExceptionCatcher.h */,
-				OBJC002OBJC002OBJC002OBJC /* ObjCExceptionCatcher.m */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -398,7 +389,7 @@
 			);
 			name = IPTVPlayer;
 			packageProductDependencies = (
-				647E9D55930FCE870B7B9264 /* SVGKit */,
+				647E9D55930FCE870B7B9264 /* SwiftDraw */,
 				ZMVBBB001ZMVBBB001ZMVBBB0 /* ZenithMedia */,
 			);
 			productName = IPTVPlayer;
@@ -420,7 +411,7 @@
 			);
 			name = "ZenithTV-iPad";
 			packageProductDependencies = (
-				IPAD_PD01IPAD_PD01IPAD_PD0 /* SVGKit */,
+				IPAD_PD01IPAD_PD01IPAD_PD0 /* SwiftDraw */,
 				IPAD_PD02IPAD_PD02IPAD_PD0 /* ZenithMedia */,
 			);
 			productName = "ZenithTV-iPad";
@@ -442,7 +433,7 @@
 			);
 			name = "ZenithTV-Mac";
 			packageProductDependencies = (
-				MAC_PD01MAC_PD01MAC_PD01 /* SVGKit */,
+				MAC_PD01MAC_PD01MAC_PD01 /* SwiftDraw */,
 				MAC_PD02MAC_PD02MAC_PD02 /* ZenithMedia */,
 			);
 			productName = "ZenithTV-Mac";
@@ -468,7 +459,7 @@
 			mainGroup = FCBE965933F6854474B79248;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */,
+				6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SwiftDraw" */,
 				ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -611,7 +602,6 @@
 				D9766CBCC3B13B1F905EA218 /* SignInView.swift in Sources */,
 				4E9BB0CCF2BB77EE728F926B /* SetupView.swift in Sources */,
 				6A3A3547E06C8A9634D06C60 /* ZenithDiscoveryService.swift in Sources */,
-				OBJC004OBJC004OBJC004OBJC /* ObjCExceptionCatcher.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -670,7 +660,6 @@
 				IPAD_BF16IPAD_BF16IPAD_BF1 /* IPTVPlayerApp.swift in Sources */,
 				IPAD_BF17IPAD_BF17IPAD_BF1 /* PlayerLayerView.swift in Sources */,
 				IPAD_BF18IPAD_BF18IPAD_BF1 /* iPadRootView.swift in Sources */,
-				IPAD_BF19IPAD_BF19IPAD_BF1 /* ObjCExceptionCatcher.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -705,7 +694,6 @@
 				MAC_BF17MAC_BF17MAC_BF17 /* PlayerLayerView.swift in Sources */,
 				MAC_BF18MAC_BF18MAC_BF18 /* iPadRootView.swift in Sources */,
 				MAC_BF19MAC_BF19MAC_BF19 /* PlatformImage.swift in Sources */,
-				MAC_BF20MAC_BF20MAC_BF20 /* ObjCExceptionCatcher.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -810,7 +798,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = "1.0";
 				INFOPLIST_FILE = IPTVPlayer/Info.plist;
-				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -856,7 +843,6 @@
 				CODE_SIGN_ENTITLEMENTS = IPTVPlayer/IPTVPlayer.entitlements;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = IPTVPlayer/Info.plist;
-				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -971,7 +957,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).ipad";
 				PRODUCT_NAME = "Zenith Player";
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = 2;
 			};
@@ -995,7 +980,6 @@
 				PROVISIONING_PROFILE_SPECIFIER = "$(ZENITH_IPAD_PROFILE)";
 				PRODUCT_NAME = "Zenith Player";
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = 2;
 			};
@@ -1018,7 +1002,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ZENITH_BUNDLE_ID).mac";
 				PRODUCT_NAME = "Zenith Player";
 				SDKROOT = macosx;
-				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
 				SWIFT_VERSION = 5.9;
 			};
 			name = Debug;
@@ -1043,7 +1026,6 @@
 				PRODUCT_NAME = "Zenith Player";
 				PROVISIONING_PROFILE_SPECIFIER = "$(ZENITH_MAC_PROFILE)";
 				SDKROOT = macosx;
-				SWIFT_OBJC_BRIDGING_HEADER = "IPTVPlayer/IPTVPlayer-Bridging-Header.h";
 				SWIFT_VERSION = 5.9;
 			};
 			name = Release;
@@ -1106,41 +1088,41 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */ = {
+		6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SwiftDraw" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SVGKit/SVGKit.git";
+			repositoryURL = "https://github.com/swhitty/SwiftDraw.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.0.0;
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.29.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		647E9D55930FCE870B7B9264 /* SVGKit */ = {
+		647E9D55930FCE870B7B9264 /* SwiftDraw */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */;
-			productName = SVGKit;
+			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SwiftDraw" */;
+			productName = SwiftDraw;
 		};
 		ZMVBBB001ZMVBBB001ZMVBBB0 /* ZenithMedia */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */;
 			productName = ZenithMedia;
 		};
-		IPAD_PD01IPAD_PD01IPAD_PD0 /* SVGKit */ = {
+		IPAD_PD01IPAD_PD01IPAD_PD0 /* SwiftDraw */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */;
-			productName = SVGKit;
+			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SwiftDraw" */;
+			productName = SwiftDraw;
 		};
 		IPAD_PD02IPAD_PD02IPAD_PD0 /* ZenithMedia */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ZMLPKG001ZMLPKG001ZMLPKG0 /* XCLocalSwiftPackageReference "ZenithMedia" */;
 			productName = ZenithMedia;
 		};
-		MAC_PD01MAC_PD01MAC_PD01 /* SVGKit */ = {
+		MAC_PD01MAC_PD01MAC_PD01 /* SwiftDraw */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SVGKit" */;
-			productName = SVGKit;
+			package = 6D97DE2CCF6D811ACEFAE33C /* XCRemoteSwiftPackageReference "SwiftDraw" */;
+			productName = SwiftDraw;
 		};
 		MAC_PD02MAC_PD02MAC_PD02 /* ZenithMedia */ = {
 			isa = XCSwiftPackageProductDependency;

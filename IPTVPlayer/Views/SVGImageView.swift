@@ -1,5 +1,5 @@
 import SwiftUI
-import SVGKit
+import SwiftDraw
 
 #if os(macOS)
 import AppKit
@@ -44,7 +44,7 @@ struct RemoteImageView: View {
             let contentType = response.value(forHTTPHeaderField: "Content-Type") ?? ""
             let isSVG = contentType.contains("svg") || url.pathExtension.lowercased() == "svg"
 
-            if isSVG, let rasterized = rasterizeSVG(data: data) {
+            if isSVG, let rasterized = SVGRasterizer.image(from: data) {
                 await ImageCache.shared.store(rasterized, for: url)
                 image = rasterized
             } else if !isSVG, let img = PlatformImage(data: data) {
@@ -58,48 +58,17 @@ struct RemoteImageView: View {
         }
         isLoading = false
     }
+}
 
-    private func rasterizeSVG(data: Data) -> PlatformImage? {
-        guard let svg = SVGKImage(data: data) else { return nil }
-        let svgSize = svg.size
-        guard svgSize.width > 0, svgSize.height > 0 else { return nil }
-
-        let maxWidth: CGFloat = 512
-        let scale = min(maxWidth / svgSize.width, maxWidth / svgSize.height)
-        let targetSize = CGSize(width: svgSize.width * scale, height: svgSize.height * scale)
-        svg.size = targetSize
-
-        // SVGKit can crash on malformed SVG paths — wrap in ObjC exception catcher
-        var result: PlatformImage?
-        _ = try? ObjCExceptionCatcher.try {
-            #if os(macOS)
-            let width = Int(targetSize.width)
-            let height = Int(targetSize.height)
-            if width > 0, height > 0,
-               let cgContext = CGContext(
-                    data: nil,
-                    width: width,
-                    height: height,
-                    bitsPerComponent: 8,
-                    bytesPerRow: 0,
-                    space: CGColorSpaceCreateDeviceRGB(),
-                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-               ) {
-                // CALayer.render(in:) expects a flipped (y-down) context, matching iOS's UIGraphicsImageRenderer.
-                cgContext.translateBy(x: 0, y: targetSize.height)
-                cgContext.scaleBy(x: 1, y: -1)
-                svg.caLayerTree?.render(in: cgContext)
-                if let cgImage = cgContext.makeImage() {
-                    result = NSImage(cgImage: cgImage, size: targetSize)
-                }
-            }
-            #else
-            let renderer = UIGraphicsImageRenderer(size: targetSize)
-            result = renderer.image { ctx in
-                svg.caLayerTree?.render(in: ctx.cgContext)
-            }
-            #endif
-        }
-        return result
+enum SVGRasterizer {
+    static func image(from data: Data, maxSide: CGFloat = 512) -> PlatformImage? {
+        guard let svg = SVG(data: data), svg.size.width > 0, svg.size.height > 0 else { return nil }
+        let scale = min(maxSide / svg.size.width, maxSide / svg.size.height)
+        let size = CGSize(width: (svg.size.width * scale).rounded(), height: (svg.size.height * scale).rounded())
+        #if os(macOS)
+        return svg.rasterize(with: size, scale: 1)
+        #else
+        return svg.rasterize(size: size)
+        #endif
     }
 }

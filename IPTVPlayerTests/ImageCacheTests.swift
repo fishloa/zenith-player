@@ -100,3 +100,41 @@ final class ImageCacheTests: XCTestCase {
         }
     }
 }
+
+final class SVGRasterizerTests: XCTestCase {
+    private let redRect = ##"<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50"><rect width="100" height="50" fill="#ff0000"/></svg>"##
+
+    func testScalesLongestSideTo512() throws {
+        let image = try XCTUnwrap(SVGRasterizer.image(from: Data(redRect.utf8)))
+        XCTAssertEqual(image.size, CGSize(width: 512, height: 256))
+    }
+
+    func testDrawsContent() throws {
+        let image = try XCTUnwrap(SVGRasterizer.image(from: Data(redRect.utf8)))
+        XCTAssertEqual(centrePixel(of: image), [255, 0, 0, 255])
+    }
+
+    func testMalformedReturnsNil() {
+        XCTAssertNil(SVGRasterizer.image(from: Data(#"<svg xmlns="http://www.w3.org/2000/svg" width="10"#.utf8)))
+    }
+
+    func testNonSVGReturnsNil() {
+        XCTAssertNil(SVGRasterizer.image(from: Data([0x89, 0x50, 0x4E, 0x47])))
+    }
+
+    func testZeroSizeReturnsNil() {
+        XCTAssertNil(SVGRasterizer.image(from: Data(#"<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"/>"#.utf8)))
+    }
+
+    private func centrePixel(of image: UIImage) -> [UInt8] {
+        guard let cg = image.cgImage else { return [] }
+        var px = [UInt8](repeating: 0, count: 4)
+        let w = CGFloat(cg.width), h = CGFloat(cg.height)
+        px.withUnsafeMutableBytes { buf in
+            let ctx = CGContext(data: buf.baseAddress, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+            ctx?.draw(cg, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+        }
+        return px
+    }
+}
