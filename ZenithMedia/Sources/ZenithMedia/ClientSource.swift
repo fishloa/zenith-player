@@ -153,7 +153,7 @@ public final class ClientSource: @unchecked Sendable {
 
     public func writeInputLog(to url: URL) -> Bool {
         let write: () -> Bool = { [weak self] in
-            guard let self, !self.closed else { return false }
+            guard let self else { return false }
             return self.session.writeInputLog(path: url.path)
         }
         if DispatchQueue.getSpecific(key: Self.queueKey) != nil { return write() }

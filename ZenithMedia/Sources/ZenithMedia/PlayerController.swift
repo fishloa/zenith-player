@@ -93,7 +93,7 @@ public struct PlayerPolicy: Sendable {
     /// Give up on a start-up (first start or after a restart) that has not
     /// produced a picture after this long, and reconnect.
     public var startTimeout = 15.0
-    /// A stream whose tracks are known but has no H.264/HEVC video fails after this long.
+    /// A stream with no H.264/HEVC video fails once this much media (seconds) has arrived without it.
     public var noVideoAfter = 1.5
     public init() {}
     public init(startBuffer: Double, stallMessageAfter: Double, stallReconnectAfter: Double,
@@ -531,7 +531,8 @@ final class Pipeline: @unchecked Sendable {
     private var pubAuth: ClientEvent?
     private var pubRefusal: ServerRefusal?
     private var pubFinite = false
-    private var firstTrackAt: Date?
+    private var pubMediaWithoutVideo = 0.0
+    private var mediaWithoutVideoFrom: Double?
     private var _aborted = false
     private var restartRequested = false
     private var lastChunkAt: Date?
@@ -584,7 +585,7 @@ final class Pipeline: @unchecked Sendable {
             s.decodedAheadSeconds = max(0, (pubLastEnqueuedVideoSeconds ?? now) - now)
             stats.decodedAheadSeconds = s.decodedAheadSeconds
         }
-        if !pubHasVideo, let t = firstTrackAt, Date().timeIntervalSince(t) > policy.noVideoAfter, state == .starting { state = .noVideo }
+        if !pubHasVideo, pubMediaWithoutVideo > policy.noVideoAfter, state == .starting { state = .noVideo }
         // Layer interrupted (e.g. in background): restart through a flush.
         if renderer.displayFailed, pubStarted { restartRequested = true }
         return (state, s)
@@ -698,7 +699,6 @@ final class Pipeline: @unchecked Sendable {
         case .trackAdded(let t), .trackUpdated(let t):
             tracks[t.trackID] = t
             lock.lock()
-            if firstTrackAt == nil { firstTrackAt = Date() }
             if stats.firstTrackAfter == nil { stats.firstTrackAfter = Date().timeIntervalSince(born) }
             lock.unlock()
             if (t.codec == .h264 || t.codec == .hevc), video == nil || video?.info.trackID == t.trackID, video?.info != t {
@@ -729,6 +729,14 @@ final class Pipeline: @unchecked Sendable {
             // (or stream-wide) discontinuity invalidates the timeline.
             if track == nil || track == video?.info.trackID { restart(newTimeline: true, fromSession: true) }
         case .sample(let s):
+            if video == nil, let t = tracks[s.trackID] {
+                let at = Double(s.pts) / Double(t.timescale)
+                if let from = mediaWithoutVideoFrom {
+                    lock.lock(); pubMediaWithoutVideo = max(pubMediaWithoutVideo, at - from); lock.unlock()
+                } else {
+                    mediaWithoutVideoFrom = at
+                }
+            }
             if s.trackID == video?.info.trackID { videoSample(s) } else if s.trackID == audio?.info.trackID { audioSample(s) }
             else if let t = tracks[s.trackID], [.aac, .ac3, .eac3, .mpegAudio].contains(t.codec) {
                 note("skip", CMTime(value: s.pts, timescale: t.timescale), "track=\(s.trackID) selected=\(audio.map { String($0.info.trackID) } ?? "none")")

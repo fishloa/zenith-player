@@ -185,6 +185,37 @@ final class PlayerControllerTests: XCTestCase {
         c.stop()
     }
 
+    /// Under load, setting up the video decoder can hold the work queue for
+    /// longer than the no-video limit: that limit counts media received
+    /// without video, not wall-clock time.
+    func testSlowVideoSetUpIsNotNoVideo() async throws {
+        let c = controller()
+        c.useDecoders { t in Thread.sleep(forTimeInterval: 2.5); return try VideoDecoder(track: t) }
+        c.play { PCRPacedSource(data: try! Fixtures.data("streams/bfm-tv.raw.ts")) }
+        let ok = await waitFor(c, timeout: 10) { $0 == .playing || $0 == .failed }
+        XCTAssertTrue(ok)
+        XCTAssertEqual(c.phase, .playing)
+        c.stop()
+    }
+
+    func testInputLogSurvivesNoVideoFailure() async throws {
+        PlayerController.recordAudioLog = true
+        ClientSource.setRecordBufferInputs(true)
+        defer { PlayerController.recordAudioLog = false; ClientSource.setRecordBufferInputs(false) }
+        let c = controller()
+        c.play { ScriptedSource(steps: [.data(try! Fixtures.data("audio/mux-aligned.ts")), .hang]) }
+        let failed = await waitFor(c, timeout: 8) { $0 == .failed }
+        XCTAssertTrue(failed, "phase \(c.phase)")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let w = c.writeDiagnostics(inputLog: dir.appendingPathComponent("in.csv"), audioLog: dir.appendingPathComponent("audio.csv"))
+        XCTAssertTrue(w.inputs)
+        let text = try String(contentsOf: dir.appendingPathComponent("in.csv"), encoding: .utf8)
+        XCTAssertGreaterThan(text.split(separator: "\n").count, 2)
+        c.stop()
+    }
+
     /// Review I2: a short gap in delivery rebuffers and resumes without reconnecting.
     func testRecoversFromDeliveryGapWithoutReconnect() async throws {
         let policy = PlayerPolicy(startBuffer: 0.5, stallMessageAfter: 0.2, stallReconnectAfter: 8,
