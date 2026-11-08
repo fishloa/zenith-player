@@ -218,12 +218,12 @@ final class ZMSession {
         }
     }
 
-    func setRenderedTracks(_ ids: [UInt32]) {
+    func setRenderedTracks(_ ids: [UInt32], nowMicros: UInt64) {
         if ids.isEmpty {
-            zm_session_set_rendered_tracks(handle, nil, 0)
+            zm_session_set_rendered_tracks(handle, nil, 0, nowMicros)
         } else {
             ids.withUnsafeBufferPointer { buf in
-                zm_session_set_rendered_tracks(handle, buf.baseAddress, buf.count)
+                zm_session_set_rendered_tracks(handle, buf.baseAddress, buf.count, nowMicros)
             }
         }
     }
@@ -242,6 +242,10 @@ final class ZMSession {
         guard zm_session_stall_memory(handle, &peak, &age) else { return nil }
         return (peak, age)
     }
+
+    static func setRecordBufferInputs(_ on: Bool) { zm_set_record_buffer_inputs(on) }
+
+    func writeInputLog(path: String) -> Bool { zm_session_write_input_log(handle, path) }
 
     func bufferStats() -> (stalls: Int, reprimes: Int, discontinuities: Int, longestFreeze: Double) {
         var s = zm_buffer_stats()

@@ -18,7 +18,7 @@ public enum StreamCredential: Sendable {
 }
 
 enum BufferDecision: Equatable {
-    case start
+    case start(at: CMTime)
     case pause(holdAt: CMTime, starvingAudio: Bool, reason: PauseReason)
     case resume(at: CMTime)
 }
@@ -147,6 +147,14 @@ public struct PlayerStats: Sendable {
     public var firstTrackAfter: Double?
     public var joinPointAfter: Double?
     public var firstFrameAfter: Double?
+    /// The first start, on the media timeline (seconds): the session's Start
+    /// position, where the clock was started, and the first picture.
+    public var sessionStartSeconds: Double?
+    public var clockStartSeconds: Double?
+    public var firstPictureSeconds: Double?
+    /// Video and audio received by the player when it started (end, seconds).
+    public var startVideoEndSeconds: Double?
+    public var startAudioEndSeconds: Double?
     /// Frames per second leaving the pipeline (after deinterlacing), from the
     /// median PTS step: what the display should refresh at (AVDisplayCriteria).
     public var outputFrameRate: Double?
@@ -298,6 +306,12 @@ public final class PlayerController {
         startMonitoring(pipe: pipe, gen: gen, source: src)
     }
 
+    nonisolated(unsafe) public static var recordAudioLog = false
+
+    public func writeDiagnostics(inputLog: URL, audioLog: URL) -> (inputs: Bool, audio: Bool) {
+        (currentSource?.writeInputLog(to: inputLog) ?? false, currentPipe?.writeAudioLog(to: audioLog) ?? false)
+    }
+
     public func stop() {
         generation += 1
         if let m = currentSource?.stallMemory { stallMemory = (peak: m.peakUs, age: m.ageUs) }
@@ -440,6 +454,17 @@ final class Pipeline: @unchecked Sendable {
     private let session: Int
     private let born = Date()
     private var timer: DispatchSourceTimer?
+    private var audioLog: [String]? = PlayerController.recordAudioLog ? ["event,now_us,pts_s,detail"] : nil
+
+    private func note(_ event: String, _ pts: CMTime?, _ detail: String = "") {
+        guard audioLog != nil else { return }
+        let p = pts.map { String(format: "%.6f", CMTimeGetSeconds($0)) } ?? ""
+        audioLog?.append("\(event),\(DispatchTime.now().uptimeNanoseconds / 1000),\(p),\(detail)")
+    }
+
+    func writeAudioLog(to url: URL) -> Bool {
+        queue.sync { (try? (audioLog ?? []).joined(separator: "\n").appending("\n").write(to: url, atomically: true, encoding: .utf8)) != nil }
+    }
 
     // Queue-confined state.
     private weak var source: ClientSource?
@@ -476,6 +501,7 @@ final class Pipeline: @unchecked Sendable {
     private var decoderFailures: [Date] = []
     private var consecutiveDecodeErrors = 0
     private var startAllowed = false
+    private var sessionStart: CMTime?
     /// The viewer's audio choice (queue-confined); nil = automatic.
     private var chosenAudio: UInt32?
     private var pubAudioOptions: [AudioTrackOption] = []
@@ -603,7 +629,7 @@ final class Pipeline: @unchecked Sendable {
                     self.handle(de)
                 case .buffer(let be):
                     switch be {
-                    case .start: self.apply(.start)
+                    case .start(let at27): self.apply(.start(at: CMTime(value: Int64(at27), timescale: 27_000_000)))
                     case .pause(let hold, let track, let reason):
                         let starvingAudio = (track != nil && track == self.audio?.info.trackID)
                         self.apply(.pause(holdAt: CMTime(value: Int64(hold), timescale: 27_000_000), starvingAudio: starvingAudio, reason: reason))
@@ -704,6 +730,9 @@ final class Pipeline: @unchecked Sendable {
             if track == nil || track == video?.info.trackID { restart(newTimeline: true, fromSession: true) }
         case .sample(let s):
             if s.trackID == video?.info.trackID { videoSample(s) } else if s.trackID == audio?.info.trackID { audioSample(s) }
+            else if let t = tracks[s.trackID], [.aac, .ac3, .eac3, .mpegAudio].contains(t.codec) {
+                note("skip", CMTime(value: s.pts, timescale: t.timescale), "track=\(s.trackID) selected=\(audio.map { String($0.info.trackID) } ?? "none")")
+            }
         }
     }
 
@@ -721,6 +750,7 @@ final class Pipeline: @unchecked Sendable {
             return
         }
         let wasPlaying = audio != nil && started
+        note("pick", nil, "track=\(pick.trackID) from=\(audio.map { String($0.info.trackID) } ?? "none") started=\(started)")
         audio = (pick, f)
         audioQ.removeAll { $0.trackID != pick.trackID }
         if wasPlaying && switching {
@@ -803,7 +833,7 @@ final class Pipeline: @unchecked Sendable {
         if newTimeline { audioQ = [] }
         startPTS = nil; lastVideoPTS = nil; videoQ = []; bufferedVideo = []
         if newTimeline { lastAudioEnd = nil }
-        started = false; paused = false; holdAt = .invalid; startAllowed = false
+        started = false; paused = false; holdAt = .invalid; startAllowed = false; sessionStart = nil
         playerJoin = rejoinSession && !fromSession
         if playerJoin, let v = video { source?.rejoin(track: v.info.trackID) }
         lock.lock(); pubLastEnqueuedVideoSeconds = nil; lock.unlock()
@@ -989,11 +1019,12 @@ final class Pipeline: @unchecked Sendable {
         audioQ.append(s)
         let end = audioTime(s) + CMTime(value: CMTimeValue(s.duration), timescale: a.info.timescale)
         lastAudioEnd = max(lastAudioEnd ?? end, end)
+        note("recv", audioTime(s), "track=\(s.trackID) end=\(String(format: "%.6f", CMTimeGetSeconds(end)))")
         publish()
         if !started {
             // Keep at most ~10 s; abs() so a backwards timeline can't pin it.
             while let first = audioQ.first, audioQ.count > 1,
-                  abs(CMTimeGetSeconds(audioTime(s) - audioTime(first))) > 10 { audioQ.removeFirst() }
+                  abs(CMTimeGetSeconds(audioTime(s) - audioTime(first))) > 10 { note("drop", audioTime(first), "cap"); audioQ.removeFirst() }
         }
     }
 
@@ -1038,8 +1069,10 @@ final class Pipeline: @unchecked Sendable {
 
     private func apply(_ d: BufferDecision) {
         switch d {
-        case .start:
+        case .start(let at):
             startAllowed = true
+            sessionStart = at
+            note("start_event", at)
         case .pause(let hold, let starvingAudio, let reason):
             guard started, !paused, policy.rebufferOnStarvation else { return }
             holdAt = hold
@@ -1059,7 +1092,8 @@ final class Pipeline: @unchecked Sendable {
         case .resume(let at):
             // After a restart (discontinuity) the controller resumes rather than
             // starting afresh: that opens the start gate for the new timeline.
-            guard started else { startAllowed = true; return }
+            note("resume_event", at, "started=\(started)")
+            guard started else { startAllowed = true; sessionStart = at; return }
             guard paused else { return }
             paused = false
             holdAt = at
@@ -1076,7 +1110,7 @@ final class Pipeline: @unchecked Sendable {
         let clock = clockTime()
         while let s = audioQ.first, audioTime(s) < limit {
             audioQ.removeFirst()
-            guard let sb = a.factory.make(s) else { continue }
+            guard let sb = a.factory.make(s) else { note("drop", audioTime(s), "factory"); continue }
             if let clock, started, !paused {
                 let lead = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sb) + CMSampleBufferGetDuration(sb) - clock)
                 lock.lock()
@@ -1084,6 +1118,7 @@ final class Pipeline: @unchecked Sendable {
                 if lead < 0 { stats.audioLateBuffers += 1 }
                 lock.unlock()
             }
+            note("enq", audioTime(s), clock.map { String(format: "clock=%.6f", CMTimeGetSeconds($0)) } ?? "")
             renderer.enqueueAudio(sb, session: session)
             if renderer.audioFailed {
                 log.error("audio renderer failed; continuing video-only")
@@ -1108,8 +1143,9 @@ final class Pipeline: @unchecked Sendable {
             while let e = audioQ.first, audioTime(e) < limit {
                 audioQ.removeFirst()
                 let dur = CMTime(value: CMTimeValue(e.duration), timescale: a.info.timescale)
-                guard audioTime(e) >= first.pts || (e.duration > 0 && audioTime(e) + dur > first.pts),
-                      let sb = a.factory.make(e) else { continue }
+                guard audioTime(e) >= first.pts || (e.duration > 0 && audioTime(e) + dur > first.pts) else { note("drop", audioTime(e), "before_first_picture"); continue }
+                guard let sb = a.factory.make(e) else { note("drop", audioTime(e), "factory"); continue }
+                note("enq", audioTime(e), "at_start")
                 let pts = CMSampleBufferGetPresentationTimeStamp(sb)
                 if pts < first.pts {
                     let trim = first.pts - pts
@@ -1124,10 +1160,18 @@ final class Pipeline: @unchecked Sendable {
         stats.framesEnqueued += bufferedVideo.count
         stats.starts += 1
         pubLastEnqueuedVideoSeconds = bufferedVideo.last.map { CMTimeGetSeconds($0.pts) }
-        if stats.firstFrameAfter == nil { stats.firstFrameAfter = Date().timeIntervalSince(born) }
+        if stats.firstFrameAfter == nil {
+            stats.firstFrameAfter = Date().timeIntervalSince(born)
+            stats.sessionStartSeconds = sessionStart.map(CMTimeGetSeconds)
+            stats.clockStartSeconds = CMTimeGetSeconds(first.pts)
+            stats.firstPictureSeconds = CMTimeGetSeconds(first.pts)
+            stats.startVideoEndSeconds = lastVideoPTS.map { CMTimeGetSeconds(videoTime($0)) }
+            stats.startAudioEndSeconds = lastAudioEnd.map(CMTimeGetSeconds)
+        }
         if let firstAudio { stats.avOffset = CMTimeGetSeconds(firstAudio - first.pts) }
         lock.unlock()
         bufferedVideo = []
+        note("start", first.pts, "video_end=\(lastVideoPTS.map { String(format: "%.6f", CMTimeGetSeconds(videoTime($0))) } ?? "-") audio_end=\(lastAudioEnd.map { String(format: "%.6f", CMTimeGetSeconds($0)) } ?? "-")")
         renderer.start(at: first.pts, session: session)
         started = true
         publish()

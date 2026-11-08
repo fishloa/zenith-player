@@ -1,4 +1,7 @@
 use std::collections::{BTreeMap, VecDeque};
+use std::sync::atomic::{AtomicBool, Ordering};
+
+pub static RECORD_BUFFER_INPUTS: AtomicBool = AtomicBool::new(false);
 
 use broadcast_client::{Config, Error as BcError, Event as BcEvent, Session};
 use transmux::TrackSpec;
@@ -63,6 +66,7 @@ fn client_config(start_us: u64) -> Config {
         p.initial_us = start_us.clamp(p.min_us, p.max_us);
     }
     config.segment_inactivity_timeout_us = 4_000_000;
+    config.record_buffer_inputs = RECORD_BUFFER_INPUTS.load(Ordering::Relaxed);
     config
 }
 
@@ -72,6 +76,7 @@ pub struct Client {
     known: BTreeMap<u32, TrackSpec>,
     pending: VecDeque<ClientEvent>,
     now_us: u64,
+    inputs: Vec<buffering_runtime::input_log::Input>,
 }
 
 impl Client {
@@ -101,6 +106,7 @@ impl Client {
             known: BTreeMap::new(),
             pending: VecDeque::new(),
             now_us,
+            inputs: Vec::new(),
         })
     }
 
@@ -113,6 +119,7 @@ impl Client {
         while let Some(ev) = self.session.next_event() {
             self.convert_event(ev);
         }
+        self.inputs.extend(self.session.drain_buffer_inputs());
         self.pending.pop_front()
     }
 
@@ -135,6 +142,17 @@ impl Client {
         self.session.on_connected(conn);
     }
 
+    pub fn write_input_log(&mut self, path: &str) -> bool {
+        self.inputs.extend(self.session.drain_buffer_inputs());
+        let log = buffering_runtime::input_log::InputLog::new(
+            self.session.buffer_input_log_config(),
+            self.session.buffer_input_log_seed(),
+            self.inputs.clone(),
+        );
+        let mut text = String::new();
+        log.write(&mut text).is_ok() && std::fs::write(path, text).is_ok()
+    }
+
     pub fn set_credentials(&mut self, c: broadcast_client::Credentials) -> bool {
         self.session.set_credentials(c).is_ok()
     }
@@ -153,9 +171,10 @@ impl Client {
         self.session.on_playback_position(now_us, pos);
     }
 
-    pub fn set_rendered_tracks(&mut self, ids: &[u32]) {
+    pub fn set_rendered_tracks(&mut self, now_us: u64, ids: &[u32]) {
+        self.now_us = now_us;
         let tracks: Vec<transmux::TrackId> = ids.iter().copied().map(transmux::TrackId::new).collect();
-        self.session.set_rendered_tracks(&tracks);
+        self.session.set_rendered_tracks(now_us, &tracks);
     }
 
     pub fn hint(&mut self, code: u32) {

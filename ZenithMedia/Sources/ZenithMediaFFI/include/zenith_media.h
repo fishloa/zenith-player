@@ -112,8 +112,10 @@ void zm_session_rejoin(zm_session *s, uint32_t track_id);
 bool zm_session_stall_memory(zm_session *s, uint64_t *peak_us, uint64_t *age_us);
 typedef struct { uint32_t stalls, reprimes, discontinuities; uint64_t longest_freeze_us; } zm_buffer_stats;
 void zm_session_buffer_stats(zm_session *s, zm_buffer_stats *out);
+void zm_set_record_buffer_inputs(bool on);
+bool zm_session_write_input_log(zm_session *s, const char *path);
 void zm_session_on_playback_position(zm_session *s, uint64_t now_us, bool has_pos, uint64_t pts_27mhz);
-void zm_session_set_rendered_tracks(zm_session *s, const uint32_t *ids, size_t n);
+void zm_session_set_rendered_tracks(zm_session *s, const uint32_t *ids, size_t n, uint64_t now_us);
 void zm_session_hint(zm_session *s, uint32_t code);
 bool zm_session_select_variant(zm_session *s, size_t index);
 /* Newest PCR seen by the demuxer since the last call (27 MHz ticks). */

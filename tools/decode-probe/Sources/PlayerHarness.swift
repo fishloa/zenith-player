@@ -70,6 +70,8 @@ enum LiveSoak {
             let c = PlayerController(renderer: PlayerHarness.renderer)
             // -trace: phase changes (Library/Caches/traces).
             let trace = args.contains("-trace") ? ArrivalTrace(id: id) : nil
+            PlayerController.recordAudioLog = trace != nil
+            ClientSource.setRecordBufferInputs(trace != nil)
             c.play(url: url)
             var bufferingEpisodes = 0, wasBuffering = false, maxReconnect = 0
             var lastPhase = ""
@@ -85,6 +87,12 @@ enum LiveSoak {
                 }
             }
             let s = c.stats
+            if trace != nil {
+                let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("traces")
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                let w = c.writeDiagnostics(inputLog: dir.appendingPathComponent("\(id).lb.csv"), audioLog: dir.appendingPathComponent("\(id).audio.csv"))
+                log("TRACE \(id) input_log=\(w.inputs) audio_log=\(w.audio)")
+            }
             let m1 = await PlayerHarness.renderer.displayMetrics()
             let shown = (m1?.total ?? 0) - (m0?.total ?? 0), late = (m1?.dropped ?? 0) - (m0?.dropped ?? 0)
             let stopStart = Date()
@@ -100,7 +108,10 @@ enum LiveSoak {
                        s.starvedNoData, s.starvedWithData, s.maxChunkGap, s.maxFeedSeconds,
                        s.firstByteAfter ?? -1, s.firstTrackAfter ?? -1, s.joinPointAfter ?? -1,
                        s.outputFrameRate ?? -1, s.hardwareDecode.map { $0 ? "yes" : "no" } ?? "?", shown, late, s.framesDecoded, s.framesEnqueued,
-                       s.minAudioLeadSeconds ?? -1, s.audioLateBuffers, s.maxDeintWait, s.maxDeintGPU, s.maxDecodeCall, s.maxDemuxFeed, s.discontinuities, s.lastPauseInfo ?? ""))
+                       s.minAudioLeadSeconds ?? -1, s.audioLateBuffers, s.maxDeintWait, s.maxDeintGPU, s.maxDecodeCall, s.maxDemuxFeed, s.discontinuities, s.lastPauseInfo ?? "")
+                + String(format: " start=[at=%.3f clock=%.3f pic=%.3f vend=%.3f aend=%.3f]",
+                         s.sessionStartSeconds ?? -1, s.clockStartSeconds ?? -1, s.firstPictureSeconds ?? -1,
+                         s.startVideoEndSeconds ?? -1, s.startAudioEndSeconds ?? -1))
         }
         log("SOAK DONE \(passed)/\(urls.count) passed")
     }

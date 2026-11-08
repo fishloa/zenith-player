@@ -105,7 +105,7 @@ public final class ClientSource: @unchecked Sendable {
         guard !ids.isEmpty else { return }
         queue.async { [weak self] in
             guard let self, !self.closed else { return }
-            self.session.setRenderedTracks(ids)
+            self.session.setRenderedTracks(ids, nowMicros: Self.nowMicros())
             self.pump()
         }
     }
@@ -147,6 +147,17 @@ public final class ClientSource: @unchecked Sendable {
             return read()
         }
         return queue.sync(execute: read)
+    }
+
+    public static func setRecordBufferInputs(_ on: Bool) { ZMSession.setRecordBufferInputs(on) }
+
+    public func writeInputLog(to url: URL) -> Bool {
+        let write: () -> Bool = { [weak self] in
+            guard let self, !self.closed else { return false }
+            return self.session.writeInputLog(path: url.path)
+        }
+        if DispatchQueue.getSpecific(key: Self.queueKey) != nil { return write() }
+        return queue.sync(execute: write)
     }
 
     public func reconnect() {

@@ -846,6 +846,20 @@ pub unsafe extern "C" fn zm_session_stall_memory(
 }
 
 #[no_mangle]
+pub extern "C" fn zm_set_record_buffer_inputs(on: bool) {
+    session::RECORD_BUFFER_INPUTS.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zm_session_write_input_log(s: *mut ZmSession, path: *const std::ffi::c_char) -> bool {
+    if s.is_null() || path.is_null() {
+        return false;
+    }
+    let Ok(p) = CStr::from_ptr(path).to_str() else { return false };
+    (*s).client.write_input_log(p)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn zm_session_buffer_stats(s: *mut ZmSession, out: *mut ZmBufferStats) {
     if s.is_null() || out.is_null() {
         return;
@@ -875,6 +889,7 @@ pub unsafe extern "C" fn zm_session_set_rendered_tracks(
     s: *mut ZmSession,
     ids: *const u32,
     n: usize,
+    now_us: u64,
 ) {
     if s.is_null() {
         return;
@@ -884,7 +899,7 @@ pub unsafe extern "C" fn zm_session_set_rendered_tracks(
     } else {
         std::slice::from_raw_parts(ids, n)
     };
-    (*s).client.set_rendered_tracks(slice);
+    (*s).client.set_rendered_tracks(now_us, slice);
 }
 
 #[no_mangle]
@@ -1012,7 +1027,7 @@ mod ffi_tests {
             let headers = if a.headers.is_null() { "" } else { CStr::from_ptr(a.headers).to_str().unwrap() };
             assert!(headers.to_lowercase().contains("authorization: basic"));
             let ids = [1u32];
-            zm_session_set_rendered_tracks(s, ids.as_ptr(), ids.len());
+            zm_session_set_rendered_tracks(s, ids.as_ptr(), ids.len(), 0);
             zm_session_on_playback_position(s, 0, false, 0);
             zm_session_hint(s, 1);
             zm_session_free(s);
