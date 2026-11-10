@@ -5,6 +5,8 @@
 #   2. live soak: playlist channels through the pipeline (SOAK PASS/FAIL);
 #      CHANNELS=a,b,c limits it (default: a codec/scan/audio cross-section)
 #   3. build + install the real Zenith app (replaces the TestFlight build) and launch it
+# Exits non-zero unless every step passed. A full pass on a clean, pushed HEAD
+# sets the GitHub commit status `tv-gate`, which the release workflow requires.
 # The Release configuration signs manually for the App Store; the device
 # build overrides that with automatic development signing.
 # usage: scripts/verify-on-tv.sh [soak-seconds=60] [device-udid]
@@ -37,7 +39,29 @@ xcodebuild -project "$ROOT/IPTVPlayer.xcodeproj" -scheme IPTVPlayer -destination
   build -quiet > "$OUT/app-build.log" 2>&1 \
   || { echo "app build failed — see $OUT/app-build.log"; exit 1; }
 APP="$(find "$ROOT/build/app-device/Build/Products" -maxdepth 2 -name '*.app' | head -1)"
-xcrun devicectl device install app --device "$DEV" "$APP" > "$OUT/app-install.log" 2>&1 && echo "installed $(basename "$APP")"
+xcrun devicectl device install app --device "$DEV" "$APP" > "$OUT/app-install.log" 2>&1 && echo "installed $(basename "$APP")" \
+  || { echo "app install failed — see $OUT/app-install.log"; exit 1; }
 BID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"
-xcrun devicectl device process launch --device "$DEV" "$BID" > "$OUT/app-launch.log" 2>&1 && echo "launched $BID"
+xcrun devicectl device process launch --device "$DEV" "$BID" > "$OUT/app-launch.log" 2>&1 && echo "launched $BID" \
+  || { echo "app launch failed — see $OUT/app-launch.log"; exit 1; }
 echo "results in $OUT"
+[ -z "${APP_ONLY:-}" ] || exit 0
+
+fail=""
+grep -q "PROBE PLAYER DONE" "$OUT/harness.txt" || fail="$fail harness-incomplete"
+grep -q "PROBE PLAYER PASS" "$OUT/harness.txt" || fail="$fail harness-empty"
+! grep -q "PROBE PLAYER FAIL" "$OUT/harness.txt" || fail="$fail harness-fail"
+read -r ok total < <(sed -nE 's/.*PROBE SOAK DONE ([0-9]+)\/([0-9]+) passed.*/\1 \2/p' "$OUT/soak.txt" | tail -1)
+[ -n "${total:-}" ] && [ "$total" -gt 0 ] && [ "$ok" = "$total" ] || fail="$fail soak(${ok:-?}/${total:-?})"
+if [ -n "$fail" ]; then echo "TV GATE FAIL:$fail"; exit 1; fi
+echo "TV GATE PASS"
+
+SHA="$(git -C "$ROOT" rev-parse HEAD)"
+if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ]; then
+  echo "tv-gate status not set: working tree has changes, so HEAD is not what was tested"
+elif ! git -C "$ROOT" branch -r --contains "$SHA" | grep -q .; then
+  echo "tv-gate status not set: $SHA is not pushed"
+else
+  gh api "repos/{owner}/{repo}/statuses/$SHA" -f state=success -f context=tv-gate \
+    -f description="harness + soak ${ok}/${total} on $(hostname -s)" >/dev/null && echo "tv-gate status set on $SHA"
+fi
