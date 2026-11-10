@@ -1,0 +1,282 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: Submit both platforms for App Review after upload
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  statuses: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Require a v* tag ref
+        shell: bash
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          ref="$REF"
+          case "$ref" in
+            refs/tags/v*) ;;
+            *) echo "release runs on a v* tag ref, got $ref" >&2; exit 1 ;;
+          esac
+
+      - name: Require tv-gate success on the tagged commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          state=$(gh api "repos/$REPO/commits/$SHA/status" \
+            --jq '[.statuses[] | select(.context=="tv-gate")][0].state // ""')
+          if [ "$state" != "success" ]; then
+            echo "no tv-gate success on $SHA: run scripts/verify-on-tv.sh on the Apple TV first (state=${state:-none})" >&2
+            exit 1
+          fi
+
+      - name: Version from tag
+        id: version
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          tag="$TAG"
+          version="${tag#v}"
+          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
+            echo "tag $tag does not yield a valid version ($version)" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: gate
+    runs-on: macos-latest
+    environment: app-store
+    timeout-minutes: 120
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+      ASC_KEY_PATH: ${{ github.workspace }}/build/AuthKey.p8
+      ZENITH_BUNDLE_ID: ${{ vars.BUNDLE_ID }}
+      DEVELOPMENT_TEAM: ${{ vars.TEAM_ID }}
+      VERSION: ${{ needs.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare key path
+        shell: bash
+        run: mkdir -p build
+
+      - name: Select newest Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Beta and RC Xcodes cannot upload to the App Store.
+          sudo xcode-select -s "$(/bin/ls -d /Applications/Xcode_*.app | grep -viE 'beta|_rc|release.candidate' | sort -V | tail -1)"
+          xcodebuild -version
+
+      - name: Install Rust targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install stable --profile minimal
+          rustup target add aarch64-apple-tvos aarch64-apple-ios
+
+      - name: Install App Store Connect deps
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip3 install --break-system-packages pyjwt cryptography \
+            || pip3 install pyjwt cryptography
+
+      - name: Write API key
+        shell: bash
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ASC_KEY_P8" > "$ASC_KEY_PATH"
+          chmod 600 "$ASC_KEY_PATH"
+
+      - name: Set up signing keychain
+        shell: bash
+        env:
+          DIST_P12_BASE64: ${{ secrets.DIST_P12_BASE64 }}
+          DIST_P12_PASSWORD: ${{ secrets.DIST_P12_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KC="$RUNNER_TEMP/release.keychain-db"
+          KCPASS=$(openssl rand -hex 24)
+          security create-keychain -p "$KCPASS" "$KC"
+          mapfile -t existing < <(security list-keychains -d user | tr -d '"')
+          security list-keychains -d user -s "$KC" "${existing[@]}"
+          security unlock-keychain -p "$KCPASS" "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          printf '%s' "$DIST_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security import "$RUNNER_TEMP/dist.p12" -P "$DIST_P12_PASSWORD" -A -t cert -f pkcs12 -k "$KC"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPASS" "$KC"
+          rm -f "$RUNNER_TEMP/dist.p12"
+          SIGN_ID=$(security find-identity -v -p codesigning "$KC" | awk 'NR==1{print $2}')
+          if [ -z "$SIGN_ID" ]; then
+            echo "no codesigning identity in $KC" >&2
+            exit 1
+          fi
+          echo "KC=$KC" >> "$GITHUB_ENV"
+          echo "SIGN_ID=$SIGN_ID" >> "$GITHUB_ENV"
+
+      - name: Install provisioning profiles
+        shell: bash
+        env:
+          TVOS_PROFILE_BASE64: ${{ secrets.TVOS_PROFILE_BASE64 }}
+          IPAD_PROFILE_BASE64: ${{ secrets.IPAD_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$TVOS_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/tvos.mobileprovision"
+          printf '%s' "$IPAD_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/ipad.mobileprovision"
+          tvos_uuid=$(security cms -D -i "$RUNNER_TEMP/tvos.mobileprovision" | plutil -extract UUID raw -o - -)
+          ipad_uuid=$(security cms -D -i "$RUNNER_TEMP/ipad.mobileprovision" | plutil -extract UUID raw -o - -)
+          for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" \
+                     "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$RUNNER_TEMP/tvos.mobileprovision" "$dir/$tvos_uuid.mobileprovision"
+            cp "$RUNNER_TEMP/ipad.mobileprovision" "$dir/$ipad_uuid.mobileprovision"
+          done
+          rm -f "$RUNNER_TEMP/tvos.mobileprovision" "$RUNNER_TEMP/ipad.mobileprovision"
+          echo "TVOS_PROFILE=$tvos_uuid" >> "$GITHUB_ENV"
+          echo "IPAD_PROFILE=$ipad_uuid" >> "$GITHUB_ENV"
+
+      - name: Write signing config
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > Config/Signing.local.xcconfig <<EOF
+          ZENITH_BUNDLE_ID = $ZENITH_BUNDLE_ID
+          DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM
+          CODE_SIGN_STYLE[config=Release] = Manual
+          CODE_SIGN_IDENTITY[config=Release][sdk=appletvos*] = $SIGN_ID
+          CODE_SIGN_IDENTITY[config=Release][sdk=iphoneos*] = $SIGN_ID
+          ZENITH_TVOS_PROFILE = $TVOS_PROFILE
+          ZENITH_IPAD_PROFILE = $IPAD_PROFILE
+          EOF
+
+      - name: Next build number
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD=$(python3 scripts/asc.py next-build)
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
+          echo "build: $BUILD"
+
+      - name: Archive and upload tvOS and iPad
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_archive() {
+            scheme="$1" destination="$2" name="$3" profile="$4"
+            archive="$RUNNER_TEMP/$name.xcarchive"
+            plist="$RUNNER_TEMP/$name-export.plist"
+            xcodebuild archive -project IPTVPlayer.xcodeproj -scheme "$scheme" -configuration Release \
+              -destination "$destination" -archivePath "$archive" \
+              MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" \
+              OTHER_CODE_SIGN_FLAGS="--keychain $KC"
+            cat > "$plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>destination</key>
+            <string>upload</string>
+            <key>teamID</key>
+            <string>$DEVELOPMENT_TEAM</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>$SIGN_ID</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$ZENITH_BUNDLE_ID</key>
+              <string>$profile</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST
+            attempt=1
+            until xcodebuild -exportArchive -archivePath "$archive" \
+                -exportOptionsPlist "$plist" -exportPath "$RUNNER_TEMP/$name-export" \
+                -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" \
+                -authenticationKeyIssuerID "$ASC_ISSUER_ID"; do
+              if [ "$attempt" -ge 3 ]; then
+                echo "upload of $name failed after $attempt attempts" >&2
+                return 1
+              fi
+              attempt=$((attempt + 1))
+              echo "upload of $name failed, retrying ($attempt/3) in 60s" >&2
+              sleep 60
+            done
+          }
+          release_archive IPTVPlayer 'generic/platform=tvOS' tvos "$TVOS_PROFILE"
+          release_archive ZenithTV-iPad 'generic/platform=iOS' ipad "$IPAD_PROFILE"
+
+
+      - name: Wait for builds to be VALID
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/asc.py wait-valid "$BUILD"
+
+      - name: Attach builds to the store versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/asc.py attach "$VERSION" "$BUILD"
+
+      - name: Submit for App Review
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.submit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/asc.py submit "$VERSION"
+          echo "SUBMITTED=yes" >> "$GITHUB_ENV"
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "version: ${VERSION:-unknown}"
+            echo "build: ${BUILD:-unknown}"
+            echo "submitted for review: ${SUBMITTED:-no}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean up credentials
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${KC:-}" ]; then security delete-keychain "$KC" || true; fi
+          rm -f "$ASC_KEY_PATH" Config/Signing.local.xcconfig
