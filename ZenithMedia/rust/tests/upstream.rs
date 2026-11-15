@@ -70,10 +70,10 @@ fn invalid_parameter_sets(data: &[u8]) -> usize {
         }
     };
     for c in data.chunks(65536) {
-        d.feed(c);
+        d.feed(c).expect("demux feed");
         count(&mut d);
     }
-    d.finish();
+    d.finish().expect("demux finish");
     count(&mut d);
     n
 }
@@ -170,10 +170,10 @@ fn clock_references_one_pid_per_capture() {
             }
         };
         for c in data.chunks(65536) {
-            d.feed(c);
+            d.feed(c).expect("demux feed");
             drain(&mut d);
         }
-        d.finish();
+        d.finish().expect("demux finish");
         drain(&mut d);
         report.push(format!("{name}: pcrs={n} pids={pids:?} disc={disc}"));
         assert!(n > 0, "{name}: no ClockReference");

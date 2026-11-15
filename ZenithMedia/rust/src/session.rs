@@ -3,7 +3,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 pub static RECORD_BUFFER_INPUTS: AtomicBool = AtomicBool::new(false);
 
-use broadcast_client::{Config, Error as BcError, Event as BcEvent, Session};
+use broadcast_client::{Config, ConnId, Error as BcError, Event as BcEvent, Session};
+use broadcast_common::clock33::Clock27;
+use broadcast_common::stage::Timestamp;
+use std::time::Duration;
 use transmux::TrackSpec;
 
 use crate::demux::{Converter, Event as DemuxEvent};
@@ -25,11 +28,11 @@ pub enum ClientEvent {
         origin: String,
         resource_metadata: Option<String>,
     },
-    AuthRejected(u16),
-    Forbidden(u16),
+    AuthRejected(http::StatusCode),
+    Forbidden(http::StatusCode),
     ServerRefused {
-        status: u16,
-        retry_after_us: Option<u64>,
+        status: http::StatusCode,
+        retry_after: Option<Duration>,
         reason: Option<String>,
     },
     Error {
@@ -59,13 +62,17 @@ pub fn pause_reason_code(r: &broadcast_client::PauseReason) -> u32 {
     }
 }
 
+pub(crate) fn micros_u64(d: Duration) -> u64 {
+    d.as_micros().try_into().unwrap_or(u64::MAX)
+}
+
 fn client_config(start_us: u64) -> Config {
     let mut config = Config::default();
     if start_us > 0 {
         let p = &mut config.buffer.policy;
-        p.initial_us = start_us.clamp(p.min_us, p.max_us);
+        p.initial = Duration::from_micros(start_us).clamp(p.min, p.max);
     }
-    config.segment_inactivity_timeout_us = 4_000_000;
+    config.segment_inactivity_timeout = Duration::from_micros(4_000_000);
     config.record_buffer_inputs = RECORD_BUFFER_INPUTS.load(Ordering::Relaxed);
     config
 }
@@ -95,11 +102,17 @@ impl Client {
         if !(lower.starts_with("http://") || lower.starts_with("https://")
             || lower.starts_with("rtsp://") || lower.starts_with("rtsps://"))
         {
-            return Err(BcError::UnsupportedScheme(url.to_string()));
+            return Err(BcError::UnsupportedScheme { scheme: url.to_string() });
         }
+        let parsed = url::Url::parse(url).map_err(|e| BcError::InvalidUrl(e.to_string()))?;
         let config = client_config(start_us);
-        let seed = (peak_us > 0).then(|| buffering_runtime::StallMemorySnapshot::new(peak_us, age_us));
-        let session = Session::open_with_memory(url, config, now_us, seed)?;
+        let seed = (peak_us > 0).then(|| {
+            buffering_runtime::StallMemorySnapshot::new(
+                Duration::from_micros(peak_us),
+                Duration::from_micros(age_us),
+            )
+        });
+        let session = Session::open_with_memory(parsed, config, Timestamp::from_micros(now_us), seed)?;
         Ok(Client {
             session,
             conv: Converter::new(),
@@ -112,7 +125,7 @@ impl Client {
 
     pub fn poll_action(&mut self, now_us: u64) -> Option<broadcast_client::Action> {
         self.now_us = now_us;
-        self.session.poll(now_us)
+        self.session.poll(Timestamp::from_micros(now_us))
     }
 
     pub fn poll_event(&mut self) -> Option<ClientEvent> {
@@ -125,21 +138,30 @@ impl Client {
 
     pub fn on_response(&mut self, conn: u32, status: u16, headers: &[(String, String)], now_us: u64) {
         self.now_us = now_us;
-        self.session.on_response(conn, status, headers, now_us);
+        let status = http::StatusCode::from_u16(status).unwrap_or(http::StatusCode::BAD_REQUEST);
+        let mut map = http::HeaderMap::new();
+        for (k, v) in headers {
+            if let (Ok(name), Ok(value)) = (http::HeaderName::try_from(k.as_str()), http::HeaderValue::try_from(v.as_str()))
+            {
+                map.append(name, value);
+            }
+        }
+        self.session.on_response(ConnId::new(conn), status, &map, Timestamp::from_micros(now_us));
     }
 
     pub fn on_data(&mut self, conn: u32, bytes: &[u8], now_us: u64) {
         self.now_us = now_us;
-        self.session.on_data(conn, bytes, now_us);
+        self.session.on_data(ConnId::new(conn), bytes, Timestamp::from_micros(now_us));
     }
 
     pub fn on_closed(&mut self, conn: u32, error: Option<String>, now_us: u64) {
         self.now_us = now_us;
-        self.session.on_closed(conn, error, now_us);
+        let error = error.map(|e| broadcast_client::TransportError::from(e.as_str()));
+        self.session.on_closed(ConnId::new(conn), error, Timestamp::from_micros(now_us));
     }
 
     pub fn on_connected(&mut self, conn: u32) {
-        self.session.on_connected(conn);
+        self.session.on_connected(ConnId::new(conn));
     }
 
     pub fn write_input_log(&mut self, path: &str) -> bool {
@@ -154,12 +176,12 @@ impl Client {
     }
 
     pub fn set_credentials(&mut self, c: broadcast_client::Credentials) -> bool {
-        self.session.set_credentials(c).is_ok()
+        self.session.set_credentials(Timestamp::from_micros(self.now_us), c).is_ok()
     }
 
     pub fn stall_memory(&self) -> (u64, u64) {
         let s = self.session.stall_memory();
-        (s.peak_us, s.age_us)
+        (micros_u64(s.peak), micros_u64(s.age))
     }
 
     pub fn buffer_stats(&self) -> broadcast_client::BufferStats {
@@ -168,42 +190,43 @@ impl Client {
 
     pub fn on_playback_position(&mut self, now_us: u64, pos: Option<u64>) {
         self.now_us = now_us;
-        self.session.on_playback_position(now_us, pos);
+        let pos = pos.map(Clock27::from_27mhz_wrapping);
+        self.session.on_playback_position(Timestamp::from_micros(now_us), pos);
     }
 
     pub fn set_rendered_tracks(&mut self, now_us: u64, ids: &[u32]) {
         self.now_us = now_us;
         let tracks: Vec<transmux::TrackId> = ids.iter().copied().map(transmux::TrackId::new).collect();
-        self.session.set_rendered_tracks(now_us, &tracks);
+        self.session.set_rendered_tracks(Timestamp::from_micros(now_us), &tracks);
     }
 
     pub fn hint(&mut self, code: u32) {
         let h = match code {
-            1 => broadcast_client::Hint::InputDegraded,
-            2 => broadcast_client::Hint::InputRecovered,
-            3 => broadcast_client::Hint::SyncLoss,
-            4 => broadcast_client::Hint::PcrDiscontinuity,
+            1 => broadcast_client::BufferHint::InputDegraded,
+            2 => broadcast_client::BufferHint::InputRecovered,
+            3 => broadcast_client::BufferHint::SyncLoss,
+            4 => broadcast_client::BufferHint::PcrDiscontinuity,
             _ => return,
         };
-        self.session.hint(h);
+        self.session.hint(Timestamp::from_micros(self.now_us), h);
     }
 
     pub fn select_variant(&mut self, index: usize) -> bool {
-        self.session.select_variant(index).is_ok()
+        self.session.select_variant(Timestamp::from_micros(self.now_us), index).is_ok()
     }
 
     pub fn reconnect(&mut self, now_us: u64) {
         self.now_us = now_us;
-        self.session.reconnect(now_us);
+        self.session.reconnect(Timestamp::from_micros(now_us));
     }
 
     pub fn rejoin(&mut self, track_id: u32) {
-        self.session.rejoin();
+        self.session.rejoin(Timestamp::from_micros(self.now_us));
         self.conv.rejoin(track_id);
     }
 
     pub fn close(&mut self) {
-        self.session.close();
+        self.session.close(Timestamp::from_micros(self.now_us));
         self.pending.clear();
     }
 
@@ -293,19 +316,19 @@ impl Client {
             BcEvent::Buffer(be) => {
                 let b = match be {
                     broadcast_client::BufferEvent::Start { at_27mhz } => {
-                        Buffer::Start { at_27mhz: at_27mhz }
+                        Buffer::Start { at_27mhz }
                     }
                     broadcast_client::BufferEvent::Pause {
                         hold_at_27mhz,
                         starving_track,
                         reason,
                     } => Buffer::Pause {
-                        hold_at_27mhz: hold_at_27mhz,
-                        starving_track: starving_track,
+                        hold_at_27mhz,
+                        starving_track,
                         reason: pause_reason_code(&reason),
                     },
                     broadcast_client::BufferEvent::Resume { at_27mhz } => {
-                        Buffer::Resume { at_27mhz: at_27mhz }
+                        Buffer::Resume { at_27mhz }
                     }
                     _ => return,
                 };
@@ -340,10 +363,10 @@ impl Client {
                     fatal,
                 });
             }
-            BcEvent::ServerRefused { status, retry_after_us, reason } => {
+            BcEvent::ServerRefused { status, retry_after, reason } => {
                 self.pending.push_back(ClientEvent::ServerRefused {
                     status,
-                    retry_after_us,
+                    retry_after,
                     reason,
                 });
             }
@@ -365,7 +388,13 @@ mod tests {
     fn first_request(c: &mut Client) -> (u32, String, Vec<(String, String)>) {
         loop {
             match c.poll_action(0).expect("an action") {
-                Action::HttpRequest { conn, url, headers, .. } => return (conn, url, headers),
+                Action::HttpRequest { conn, url, headers, .. } => {
+                    let headers = headers
+                        .iter()
+                        .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or_default().to_string()))
+                        .collect();
+                    return (conn.get(), url.to_string(), headers);
+                }
                 _ => continue,
             }
         }
@@ -467,14 +496,14 @@ mod tests {
 
     #[test]
     fn client_config_stalls_after_4s() {
-        assert_eq!(client_config(0).segment_inactivity_timeout_us, 4_000_000);
+        assert_eq!(client_config(0).segment_inactivity_timeout, Duration::from_micros(4_000_000));
     }
 
     #[test]
     fn client_config_keeps_start_buffer() {
         let c = client_config(3_000_000);
         let p = &c.buffer.policy;
-        assert_eq!(p.initial_us, 3_000_000.clamp(p.min_us, p.max_us));
+        assert_eq!(p.initial, Duration::from_micros(3_000_000).clamp(p.min, p.max));
     }
 
     #[test]
@@ -497,8 +526,8 @@ mod tests {
             if c.poll_action(0).is_none() { break; }
         }
         assert_eq!(refused, vec![ClientEvent::ServerRefused {
-            status: 503,
-            retry_after_us: Some(30_000_000),
+            status: http::StatusCode::SERVICE_UNAVAILABLE,
+            retry_after: Some(Duration::from_secs(30)),
             reason: Some("descrambler busy: all 4 CAM slots in use".to_string()),
         }]);
     }

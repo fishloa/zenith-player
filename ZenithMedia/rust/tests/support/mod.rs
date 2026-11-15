@@ -107,8 +107,8 @@ pub fn garble(ts: &[u8]) -> Vec<u8> {
         }
         if pid > 0x1F && pid != 0x1FFF && afc & 1 == 1 && off < 188 {
             let from = if pusi { (off + 32).min(188) } else { off };
-            for k in from..188 {
-                p[k] ^= 0x5Au8.wrapping_add(k as u8);
+            for (k, b) in p.iter_mut().enumerate().take(188).skip(from) {
+                *b ^= 0x5Au8.wrapping_add(k as u8);
             }
         }
     }

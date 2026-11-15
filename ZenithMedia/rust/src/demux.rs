@@ -168,10 +168,10 @@ impl Demux {
         }
     }
     pub fn feed(&mut self, bytes: &[u8]) {
-        self.inner.feed(bytes);
+        let _ = self.inner.feed(bytes);
     }
     pub fn finish(&mut self) {
-        self.inner.finish();
+        let _ = self.inner.finish();
     }
     /// Restart the live join on a video track (after a decoder reset or a
     /// discontinuity): samples are dropped again until the next join point.
@@ -206,13 +206,20 @@ impl Demux {
             DemuxEvent::Sample { track_id, sample, .. } => self.conv.sample(track_id.value(), &sample, None).map(Event::Sample),
             DemuxEvent::Discontinuity { track, .. } => Some(Event::Discontinuity(track.map(|t| t.value()))),
             DemuxEvent::ClockReference { ticks, clock_hz, .. } => {
-                if clock_hz > 0 {
-                    self.last_pcr_27mhz = Some(((ticks as u128) * 27_000_000 / clock_hz as u128) as u64);
+                let hz = u128::from(clock_hz.get());
+                if let Some(us) = ((ticks as u128) * 27_000_000).checked_div(hz) {
+                    self.last_pcr_27mhz = Some(us as u64);
                 }
                 None
             }
             _ => None,
         }
+    }
+}
+
+impl Default for Converter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -241,7 +248,8 @@ impl Converter {
             Codec::Hevc => access_unit_is_rap(NalCodec::Hevc, &sample.data, true),
             _ => true,
         };
-        let pts = sample.pts.or(sample.dts)?;
+        let timing = sample.timing?;
+        let pts = timing.pts().or(timing.dts())?;
         let join = match join {
             Some(j) => match j {
                 JoinDecision::Keep => Join::Keep,
@@ -264,8 +272,8 @@ impl Converter {
         Some(SampleOut {
             track_id,
             pts,
-            dts: sample.dts.unwrap_or(pts),
-            duration: sample.duration.unwrap_or(0),
+            dts: timing.dts().unwrap_or(pts),
+            duration: timing.duration().unwrap_or(0),
             is_sync: sample.flags.is_sync,
             is_rap,
             join,
@@ -295,9 +303,9 @@ impl Converter {
         };
         if matches!(t.codec, Codec::H264 | Codec::Hevc) {
             self.configs.insert(t.track_id, spec.config.clone());
-            if !self.joins.contains_key(&t.track_id) {
+            if let std::collections::hash_map::Entry::Vacant(e) = self.joins.entry(t.track_id) {
                 if let Some(j) = LiveJoin::for_config(&spec.config) {
-                    self.joins.insert(t.track_id, j);
+                    e.insert(j);
                 }
             }
         }
@@ -311,7 +319,7 @@ fn track_info(spec: &TrackSpec) -> Option<TrackInfo> {
     let mut t = TrackInfo {
         track_id: spec.track_id.value(),
         codec: Codec::Other,
-        timescale: spec.timescale,
+        timescale: spec.timescale.get(),
         width: 0,
         height: 0,
         channels: 0,

@@ -10,11 +10,13 @@ description = "Thin C ABI over transmux streaming TS demux and oxideav-mp2 for t
 crate-type = ["staticlib", "rlib"]
 
 [dependencies]
-transmux = "=0.31.0"
-broadcast-common = "=12.0.0"
-buffering-runtime = "=0.3.0"
-broadcast-client = "=0.5.0"
+transmux = "=0.32.0"
+broadcast-common = "=13.0.0"
+buffering-runtime = "=0.4.0"
+broadcast-client = "=0.6.0"
 oxideav-mp2 = "=0.0.10"
+http = "1"
+url = "2"
 
 [profile.release]
 panic = "abort"

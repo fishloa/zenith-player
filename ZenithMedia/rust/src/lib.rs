@@ -358,15 +358,15 @@ impl HeldEvent {
         if let session::ClientEvent::Error { name, .. } = &h.client_event {
             h.text = CString::new(name.clone()).ok();
         }
-        if let session::ClientEvent::ServerRefused { reason, .. } = &h.client_event {
-            if let Some(r) = reason {
-                h.text = CString::new(r.clone()).ok();
-            }
+        if let session::ClientEvent::ServerRefused { reason: Some(r), .. } = &h.client_event {
+            h.text = CString::new(r.clone()).ok();
         }
         h
     }
 }
 
+/// # Safety
+/// `url` is a NUL-terminated string or null.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_open(url: *const std::ffi::c_char, now_us: u64) -> *mut ZmSession {
     if url.is_null() {
@@ -385,6 +385,8 @@ pub unsafe extern "C" fn zm_session_open(url: *const std::ffi::c_char, now_us: u
     }
 }
 
+/// # Safety
+/// `url` is a NUL-terminated string or null.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_open_with_memory(
     url: *const std::ffi::c_char,
@@ -434,6 +436,9 @@ pub unsafe extern "C" fn zm_session_open_ex(
     }
 }
 
+/// # Safety
+/// `p` comes from `zm_session_open`, `zm_session_open_with_memory` or
+/// `zm_session_open_ex`, and is not used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_free(p: *mut ZmSession) {
     if !p.is_null() {
@@ -441,6 +446,8 @@ pub unsafe extern "C" fn zm_session_free(p: *mut ZmSession) {
     }
 }
 
+/// # Safety
+/// `s` and `out` are valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_poll_action(
     s: *mut ZmSession,
@@ -467,21 +474,21 @@ pub unsafe extern "C" fn zm_session_poll_action(
             } => {
                 let mut hs = String::new();
                 for (k, v) in &headers {
-                    hs.push_str(k);
+                    hs.push_str(k.as_str());
                     hs.push_str(": ");
-                    hs.push_str(v);
+                    hs.push_str(v.to_str().unwrap_or_default());
                     hs.push('\n');
                 }
                 let (has_range, range_start, range_len) = match byte_range {
-                    Some((a, b)) => (true, a, b),
+                    Some(r) => (true, r.offset, r.len.get()),
                     None => (false, 0, 0),
                 };
                 break HeldAction {
-                    method: CString::new(method).ok(),
-                    url: CString::new(url).ok(),
+                    method: CString::new(method.as_str()).ok(),
+                    url: CString::new(url.to_string()).ok(),
                     headers: CString::new(hs).ok(),
                     kind: 1,
-                    conn,
+                    conn: conn.get(),
                     has_range,
                     range_start,
                     range_len,
@@ -498,7 +505,7 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     url: None,
                     headers: None,
                     kind: 2,
-                    conn,
+                    conn: conn.get(),
                     has_range: false,
                     range_start: 0,
                     range_len: 0,
@@ -519,7 +526,7 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     has_range: false,
                     range_start: 0,
                     range_len: 0,
-                    wake_us: us,
+                    wake_us: us.as_micros(),
                     host: None,
                     port: 0,
                     tls: false,
@@ -532,7 +539,7 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     url: None,
                     headers: None,
                     kind: 4,
-                    conn,
+                    conn: conn.get(),
                     has_range: false,
                     range_start: 0,
                     range_len: 0,
@@ -549,7 +556,7 @@ pub unsafe extern "C" fn zm_session_poll_action(
                     url: None,
                     headers: None,
                     kind: 5,
-                    conn,
+                    conn: conn.get(),
                     has_range: false,
                     range_start: 0,
                     range_len: 0,
@@ -582,6 +589,8 @@ pub unsafe extern "C" fn zm_session_poll_action(
     true
 }
 
+/// # Safety
+/// `s` and `ev` are valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_poll(s: *mut ZmSession, ev: *mut ZmEvent) -> bool {
     if s.is_null() || ev.is_null() {
@@ -609,13 +618,13 @@ fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
             match s {
                 Status::Establishing => out.status = 1,
                 Status::Live => out.status = 2,
-                Status::Stalled { secs } => {
+                Status::Stalled { stalled } => {
                     out.status = 3;
-                    out.status_value = *secs;
+                    out.status_value = stalled.as_secs();
                 }
                 Status::Reconnecting { attempt } => {
                     out.status = 4;
-                    out.status_value = *attempt;
+                    out.status_value = u64::from(*attempt);
                 }
                 Status::NotFound => out.status = 5,
                 Status::WaitingForCredentials => out.status = 6,
@@ -644,11 +653,11 @@ fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
         }
         session::ClientEvent::AuthRejected(status) => {
             out.kind = 9;
-            out.http_status = *status;
+            out.http_status = status.as_u16();
         }
         session::ClientEvent::Forbidden(status) => {
             out.kind = 10;
-            out.http_status = *status;
+            out.http_status = status.as_u16();
         }
         session::ClientEvent::Starved { with_data } => {
             out.kind = 11;
@@ -698,10 +707,10 @@ fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
                 .as_ref()
                 .map_or(std::ptr::null(), |c| c.as_ptr());
         }
-        session::ClientEvent::ServerRefused { status, retry_after_us, .. } => {
+        session::ClientEvent::ServerRefused { status, retry_after, .. } => {
             out.kind = 16;
-            out.http_status = *status;
-            out.status_value = retry_after_us.unwrap_or(0);
+            out.http_status = status.as_u16();
+            out.status_value = retry_after.map_or(0, session::micros_u64);
             out.text = held
                 .text
                 .as_ref()
@@ -710,6 +719,8 @@ fn fill_session_event(out: &mut ZmEvent, held: &HeldEvent) {
     }
 }
 
+/// # Safety
+/// `s` is valid, `headers` is a NUL-terminated string or null.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_on_response(
     s: *mut ZmSession,
@@ -737,6 +748,8 @@ pub unsafe extern "C" fn zm_session_on_response(
     zs.client.on_response(conn, status, &parsed, now_us);
 }
 
+/// # Safety
+/// `s` is valid, `bytes` is valid for `len` bytes (or `len == 0`).
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_on_data(
     s: *mut ZmSession,
@@ -759,6 +772,8 @@ pub unsafe extern "C" fn zm_session_on_data(
     zs.client.on_data(conn, slice, now_us);
 }
 
+/// # Safety
+/// `s` is valid, `error` is a NUL-terminated string or null.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_on_closed(
     s: *mut ZmSession,
@@ -778,6 +793,8 @@ pub unsafe extern "C" fn zm_session_on_closed(
     zs.client.on_closed(conn, err, now_us);
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_on_connected(s: *mut ZmSession, conn: u32) {
     if s.is_null() {
@@ -787,6 +804,8 @@ pub unsafe extern "C" fn zm_session_on_connected(s: *mut ZmSession, conn: u32) {
     zs.client.on_connected(conn);
 }
 
+/// # Safety
+/// `s`, `user` and `password` are valid, the strings NUL-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_set_password(
     s: *mut ZmSession,
@@ -803,6 +822,8 @@ pub unsafe extern "C" fn zm_session_set_password(
         .set_credentials(broadcast_client::Credentials::new(u, p))
 }
 
+/// # Safety
+/// `s` and `token` are valid, the string NUL-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_set_bearer(s: *mut ZmSession, token: *const std::ffi::c_char) -> bool {
     if s.is_null() || token.is_null() {
@@ -814,6 +835,8 @@ pub unsafe extern "C" fn zm_session_set_bearer(s: *mut ZmSession, token: *const 
         .set_credentials(broadcast_client::Credentials::bearer(t))
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_reconnect(s: *mut ZmSession, now_us: u64) {
     if s.is_null() {
@@ -822,6 +845,8 @@ pub unsafe extern "C" fn zm_session_reconnect(s: *mut ZmSession, now_us: u64) {
     (*s).client.reconnect(now_us);
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_rejoin(s: *mut ZmSession, track_id: u32) {
     if s.is_null() {
@@ -830,6 +855,8 @@ pub unsafe extern "C" fn zm_session_rejoin(s: *mut ZmSession, track_id: u32) {
     (*s).client.rejoin(track_id);
 }
 
+/// # Safety
+/// `s`, `peak_us` and `age_us` are valid.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_stall_memory(
     s: *mut ZmSession,
@@ -850,6 +877,8 @@ pub extern "C" fn zm_set_record_buffer_inputs(on: bool) {
     session::RECORD_BUFFER_INPUTS.store(on, std::sync::atomic::Ordering::Relaxed);
 }
 
+/// # Safety
+/// `s` is valid, `path` is a NUL-terminated string or null.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_write_input_log(s: *mut ZmSession, path: *const std::ffi::c_char) -> bool {
     if s.is_null() || path.is_null() {
@@ -859,6 +888,8 @@ pub unsafe extern "C" fn zm_session_write_input_log(s: *mut ZmSession, path: *co
     (*s).client.write_input_log(p)
 }
 
+/// # Safety
+/// `s` and `out` are valid.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_buffer_stats(s: *mut ZmSession, out: *mut ZmBufferStats) {
     if s.is_null() || out.is_null() {
@@ -868,9 +899,11 @@ pub unsafe extern "C" fn zm_session_buffer_stats(s: *mut ZmSession, out: *mut Zm
     (*out).stalls = bs.stalls;
     (*out).reprimes = bs.reprimes;
     (*out).discontinuities = bs.discontinuities;
-    (*out).longest_freeze_us = bs.longest_freeze_us;
+    (*out).longest_freeze_us = session::micros_u64(bs.longest_freeze);
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_on_playback_position(
     s: *mut ZmSession,
@@ -884,6 +917,8 @@ pub unsafe extern "C" fn zm_session_on_playback_position(
     (*s).client.on_playback_position(now_us, if has_pos { Some(pts_27mhz) } else { None });
 }
 
+/// # Safety
+/// `s` is valid, `ids` is valid for `n` u32s (or `n == 0`).
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_set_rendered_tracks(
     s: *mut ZmSession,
@@ -902,6 +937,8 @@ pub unsafe extern "C" fn zm_session_set_rendered_tracks(
     (*s).client.set_rendered_tracks(now_us, slice);
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_hint(s: *mut ZmSession, code: u32) {
     if s.is_null() {
@@ -910,6 +947,8 @@ pub unsafe extern "C" fn zm_session_hint(s: *mut ZmSession, code: u32) {
     (*s).client.hint(code);
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_select_variant(s: *mut ZmSession, index: usize) -> bool {
     if s.is_null() {
@@ -918,6 +957,8 @@ pub unsafe extern "C" fn zm_session_select_variant(s: *mut ZmSession, index: usi
     (*s).client.select_variant(index)
 }
 
+/// # Safety
+/// `s` is valid, `s` from a session open.
 #[no_mangle]
 pub unsafe extern "C" fn zm_session_close(s: *mut ZmSession) {
     if s.is_null() {
@@ -946,7 +987,7 @@ mod ffi_tests {
             zm_session_on_response(s, a.conn, 401, h.as_ptr(), 0);
             let mut e: ZmEvent = std::mem::zeroed();
             let mut seen = false;
-            while unsafe { zm_session_poll(s, &mut e) } {
+            while zm_session_poll(s, &mut e) {
                 if e.kind == 8 {
                     seen = true;
                     assert_eq!(CStr::from_ptr(e.auth_scheme).to_str().unwrap(), "bearer");
