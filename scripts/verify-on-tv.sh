@@ -24,6 +24,17 @@ OUT="$ROOT/testdata/verify-$(date +%Y%m%d-%H%M)"; mkdir -p "$OUT"
 . "$ROOT/scripts/env.sh"
 KEY_ID="${ASC_KEY_ID:?set ASC_KEY_ID (see .env.example)}"; ISSUER="${ASC_ISSUER_ID:?set ASC_ISSUER_ID}"
 
+# A sleeping TV refuses foreground launches and devicectl then hangs; a deep
+# sleep can ignore the first few wake requests.
+if [ -n "${ATV_HOST:-}" ]; then
+  ATVREMOTE="${ATVREMOTE:-$(command -v atvremote || echo ~/.local/bin/atvremote)}"
+  for i in $(seq 1 12); do
+    "$ATVREMOTE" -s "$ATV_HOST" turn_on >/dev/null 2>&1; sleep 5
+    [ "$("$ATVREMOTE" -s "$ATV_HOST" power_state 2>/dev/null | tail -1)" = PowerState.On ] && break
+    [ "$i" = 12 ] && { echo "TV GATE FAIL: $ATV_HOST would not wake"; exit 1; }
+  done
+fi
+
 if [ -z "${APP_ONLY:-}" ]; then
 echo "== 1/3 player harness"
 "$ROOT/tools/decode-probe/run-on-device.sh" "$DEV" -playerOnly | tee "$OUT/harness.txt" | grep PLAYER
