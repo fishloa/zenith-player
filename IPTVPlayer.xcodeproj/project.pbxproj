@@ -1093,7 +1093,7 @@
 			repositoryURL = "https://github.com/swhitty/SwiftDraw.git";
 			requirement = {
 				kind = upToNextMinorVersion;
-				minimumVersion = 0.29.0;
+				minimumVersion = 0.30.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
