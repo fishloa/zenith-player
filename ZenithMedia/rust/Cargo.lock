@@ -69,9 +69,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-auth"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3759a5fec0b8853cd7344caa2a2036919b1eb9d2c384cfe3b53d8c909978c212"
+checksum = "c8b4c03907052a317bc2fd4d200e9d217630595915fca2c3d2747264093c8046"
 dependencies = [
  "base64 0.23.1",
  "broadcast-common",
@@ -127,9 +127,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-common"
-version = "13.0.0"
+version = "13.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a4fb79cf9d7a8b9c1c4efc37b5b7fba7f921f42d1a6ca99a9fed86f5274314c"
+checksum = "b05c9fe16aee9e072862b432200ad4a2db576e8856692307b26eec8c901ac039"
 dependencies = [
  "base64 0.23.1",
  "erased-serde",
@@ -146,9 +146,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-dash"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2af0e1783cd3f0dc1a09469bc8a8d677e1a443b8432fac030fd2c94631d0aef0"
+checksum = "6a9d5172b137047dc1a82b8d8717830622c05a8db6a41f3a0e986dee42e7c56c"
 dependencies = [
  "broadcast-common",
  "jiff",
@@ -158,9 +158,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-hls"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cb22a7264a29a63cb483474e302b283d947b950737cf1617d2973550c9957f0"
+checksum = "058fcc012c656c1971456e27e005366230edbe1277d9b8d4752a33bd51e74008"
 dependencies = [
  "broadcast-common",
  "jiff",
@@ -170,9 +170,9 @@ dependencies = [
 
 [[package]]
 name = "broadcast-smooth"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1340f45ef6f344d7580014418fafef2b94522b429e1b3a9bf72e9fd82fd2c50f"
+checksum = "b73c825548d92acf993bed049c31b2a6969b42ac81df8d9a661a24363daa38f3"
 dependencies = [
  "broadcast-common",
 ]
@@ -448,9 +448,9 @@ dependencies = [
 
 [[package]]
 name = "dvb-si"
-version = "15.0.0"
+version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6f9491cf238de659b5a16618541e414628a763472e0a61d19dab1a04fa03229"
+checksum = "9794183a3fda2cfff7fcc3bf6181f92875f935efa286c49b23e810c41d1b1287"
 dependencies = [
  "broadcast-common",
  "bytes",
@@ -1284,9 +1284,9 @@ dependencies = [
 
 [[package]]
 name = "rtmp-runtime"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7850e7c0d8919e6eedd75083522e2c5c1e19414da071d44512a979ef9d712a0a"
+checksum = "6f57ba710da621465494f1c3859dbe3268f6055b742c2fdfb910bb3e174abc5b"
 dependencies = [
  "broadcast-common",
  "percent-encoding",
@@ -1710,9 +1710,9 @@ dependencies = [
 
 [[package]]
 name = "transmux"
-version = "0.32.0"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cef484f8dfddde1a6bf741022e90a6689792948811f34cd851355b7d5acf8645"
+checksum = "26263260a00745a143451a6e6092058c057633fbdf3f9f7cf7b4f53dfaf0d2f3"
 dependencies = [
  "aes",
  "base64 0.23.1",
