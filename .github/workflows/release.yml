@@ -128,7 +128,8 @@ jobs:
           KC="$RUNNER_TEMP/release.keychain-db"
           KCPASS=$(openssl rand -hex 24)
           security create-keychain -p "$KCPASS" "$KC"
-          mapfile -t existing < <(security list-keychains -d user | tr -d '"')
+          existing=()
+          while IFS= read -r k; do existing+=("$k"); done < <(security list-keychains -d user | sed -E 's/^[[:space:]]*"?//; s/"?[[:space:]]*$//')
           security list-keychains -d user -s "$KC" "${existing[@]}"
           security unlock-keychain -p "$KCPASS" "$KC"
           security set-keychain-settings -lut 21600 "$KC"
