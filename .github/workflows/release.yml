@@ -69,7 +69,7 @@ jobs:
 
   release:
     needs: gate
-    runs-on: macos-latest
+    runs-on: macos-26
     environment: app-store
     timeout-minutes: 120
     env:
