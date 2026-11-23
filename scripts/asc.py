@@ -89,10 +89,10 @@ def prepare_version(version):
         else:
             v = call("POST", "appStoreVersions", {"data": {
                 "type": "appStoreVersions",
-                "attributes": {"platform": platform, "versionString": version, "releaseType": "MANUAL"},
+                "attributes": {"platform": platform, "versionString": version, "releaseType": "AFTER_APPROVAL"},
                 "relationships": {"app": {"data": {"type": "apps", "id": APP}}}}})["data"]
         call("PATCH", f"appStoreVersions/{v['id']}",
-             {"data": {"type": "appStoreVersions", "id": v["id"], "attributes": {"releaseType": "MANUAL"}}})
+             {"data": {"type": "appStoreVersions", "id": v["id"], "attributes": {"releaseType": "AFTER_APPROVAL"}}})
         ids[platform] = v["id"]
         print(f"{platform} {version}: {v['id']}")
     return ids
