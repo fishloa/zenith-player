@@ -26,14 +26,14 @@ fi
 RUN_ID="$(date +%s)-$$"
 LOG="$(mktemp)"
 shift || true
-xcrun devicectl device process launch --device "$DEV" --console --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u"} -runId "$RUN_ID" "$@" > "$LOG" 2>&1 &
+xcrun devicectl device process launch --device "$DEV" --console --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u${ZENITH_TOKEN:+?t=$ZENITH_TOKEN}"} -runId "$RUN_ID" "$@" > "$LOG" 2>&1 &
 PID=$!
 MARK="${WAIT_FOR:-PROBE PLAYER DONE}"
 # A --console launch sometimes hangs without starting the app: relaunch plainly and follow probe.log.
 for _ in $(seq 1 12); do [ -s "$LOG" ] && break; sleep 5; done
 if [ ! -s "$LOG" ]; then
   kill "$PID" 2>/dev/null || true
-  timeout 60 xcrun devicectl device process launch --device "$DEV" --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u"} -runId "$RUN_ID" "$@" >/dev/null 2>&1 || true
+  timeout 60 xcrun devicectl device process launch --device "$DEV" --terminate-existing "$PROBE_BUNDLE_ID" -- ${ZENITH_URL:+-playlist "$ZENITH_URL/playlist.m3u${ZENITH_TOKEN:+?t=$ZENITH_TOKEN}"} -runId "$RUN_ID" "$@" >/dev/null 2>&1 || true
   sleep 10
 fi
 for _ in $(seq 1 1200); do
