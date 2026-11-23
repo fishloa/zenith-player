@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       submit:
-        description: Submit both platforms for App Review after upload
+        description: Submit both platforms for App Review after upload (tag pushes always submit)
         type: boolean
         default: false
 
@@ -255,7 +255,7 @@ jobs:
           python3 scripts/asc.py attach "$VERSION" "$BUILD"
 
       - name: Submit for App Review
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.submit }}
+        if: ${{ github.event_name == 'push' || inputs.submit }}
         shell: bash
         run: |
           set -euo pipefail
