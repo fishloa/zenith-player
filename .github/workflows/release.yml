@@ -69,7 +69,7 @@ jobs:
 
   release:
     needs: gate
-    runs-on: macos-26
+    runs-on: xcode-27
     environment: app-store
     timeout-minutes: 120
     env:
@@ -94,6 +94,7 @@ jobs:
           # Beta and RC Xcodes cannot upload to the App Store.
           sudo xcode-select -s "$(/bin/ls -d /Applications/Xcode_*.app | grep -viE 'beta|_rc|release.candidate' | sort -V | tail -1)"
           xcodebuild -version
+          xcodebuild -downloadComponent MetalToolchain
 
       - name: Install Rust targets
         shell: bash
