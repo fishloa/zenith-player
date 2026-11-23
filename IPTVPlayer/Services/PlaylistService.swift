@@ -1,10 +1,20 @@
 import Foundation
 import Observation
+import ZenithMedia
 
 struct SignInRequest: Equatable {
     let origin: Origin
     let challenge: AuthChallenge?
     let rejected: Bool
+}
+
+extension SignInRequest {
+    init?(_ auth: AuthRequest) {
+        guard let url = URL(string: auth.origin), let origin = Origin(url) else { return nil }
+        self.init(origin: origin,
+                  challenge: AuthChallenge(scheme: auth.scheme.lowercased(), realm: auth.realm, resourceMetadata: auth.resourceMetadata),
+                  rejected: auth.rejected)
+    }
 }
 
 @MainActor @Observable

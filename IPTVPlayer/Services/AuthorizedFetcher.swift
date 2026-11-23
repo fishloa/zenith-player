@@ -19,7 +19,7 @@ final class AuthorizedFetcher {
         }
     }
 
-    private let credentials: CredentialStore
+    let credentials: CredentialStore
     private let session: URLSession
 
     init(credentials: CredentialStore, session: URLSession = URLSession(configuration: .ephemeral)) {

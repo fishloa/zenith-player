@@ -133,7 +133,13 @@ final class PlayerSessionTests: XCTestCase {
         c.play(url: url)
         let ok = await waitFor(c, timeout: 5) { $0 == .needsCredentials(host: "127.0.0.1") }
         XCTAssertTrue(ok, "phase \(c.phase)")
+        let auth = try XCTUnwrap(c.authRequest)
+        XCTAssertEqual(auth.scheme.lowercased(), "basic")
+        XCTAssertEqual(auth.realm, "tv")
+        XCTAssertEqual(URL(string: auth.origin)?.host, "127.0.0.1")
+        XCTAssertNil(auth.resourceMetadata)
         c.stop()
+        XCTAssertNil(c.authRequest)
     }
 
     func testAudioSwitchKeepsPlaying() async throws {

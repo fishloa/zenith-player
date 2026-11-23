@@ -142,12 +142,19 @@ struct PlayerView: View {
                     }
                 }
             case .needsCredentials(let host):
-                VStack(spacing: 20) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.secondary)
-                    Text("Sign in to \(host) in Settings")
-                        .font(.headline)
+                if let request = player.authRequest.flatMap(SignInRequest.init) {
+                    SignInView(request: request, credentials: AuthorizedFetcher.shared.credentials) {
+                        let url = currentChannel.streamURL
+                        player.play(url: url, credential: AuthorizedFetcher.streamCredential(for: url))
+                    }
+                } else {
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.secondary)
+                        Text("Sign in to \(host)")
+                            .font(.headline)
+                    }
                 }
             case .forbidden:
                 VStack(spacing: 20) {

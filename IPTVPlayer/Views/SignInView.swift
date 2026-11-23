@@ -17,8 +17,18 @@ enum SignInMethod: Equatable {
 
 struct SignInView: View {
     let request: SignInRequest
-    var settingsStore: SettingsStore
+    let credentials: CredentialStore
     var onDone: () -> Void
+
+    init(request: SignInRequest, credentials: CredentialStore, onDone: @escaping () -> Void) {
+        self.request = request
+        self.credentials = credentials
+        self.onDone = onDone
+    }
+
+    init(request: SignInRequest, settingsStore: SettingsStore, onDone: @escaping () -> Void) {
+        self.init(request: request, credentials: settingsStore.credentials, onDone: onDone)
+    }
 
     @State private var user = ""
     @State private var password = ""
@@ -50,7 +60,7 @@ struct SignInView: View {
     }
 
     private func save(_ credential: Credential) {
-        settingsStore.credentials.set(credential, for: request.origin)
+        credentials.set(credential, for: request.origin)
         onDone()
     }
 }

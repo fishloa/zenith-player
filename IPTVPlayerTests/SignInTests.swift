@@ -1,4 +1,5 @@
 import XCTest
+import ZenithMedia
 @testable import IPTVPlayer
 
 final class SignInTests: XCTestCase {
@@ -21,5 +22,12 @@ final class SignInTests: XCTestCase {
         XCTAssertEqual(SignInMethod.methods(for: SignInRequest(origin: origin, challenge: nil, rejected: false)), [.token])
         let bearer = SignInRequest(origin: origin, challenge: AuthChallenge(scheme: "bearer", realm: nil, resourceMetadata: nil), rejected: true)
         XCTAssertEqual(SignInMethod.methods(for: bearer), [.token])
+    }
+
+    func testSignInRequestFromPlayerAuth() {
+        let md = URL(string: "https://tv.example.org/.well-known/oauth-protected-resource/stream/ts/orf1")!
+        let r = SignInRequest(AuthRequest(scheme: "Bearer", realm: "zenith", origin: "https://tv.example.org", resourceMetadata: md, rejected: true))
+        XCTAssertEqual(r, SignInRequest(origin: origin, challenge: AuthChallenge(scheme: "bearer", realm: "zenith", resourceMetadata: md), rejected: true))
+        XCTAssertNil(SignInRequest(AuthRequest(scheme: "Basic", realm: nil, origin: "not a url", resourceMetadata: nil, rejected: false)))
     }
 }

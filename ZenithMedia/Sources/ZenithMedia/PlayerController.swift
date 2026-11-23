@@ -12,6 +12,22 @@ public enum PlayerPhase: Equatable, Sendable {
     case loading, playing, buffering(String?), reconnecting(attempt: Int), failed, needsCredentials(host: String), forbidden
 }
 
+public struct AuthRequest: Equatable, Sendable {
+    public let scheme: String
+    public let realm: String?
+    public let origin: String
+    public let resourceMetadata: URL?
+    public let rejected: Bool
+
+    public init(scheme: String, realm: String?, origin: String, resourceMetadata: URL?, rejected: Bool) {
+        self.scheme = scheme
+        self.realm = realm
+        self.origin = origin
+        self.resourceMetadata = resourceMetadata
+        self.rejected = rejected
+    }
+}
+
 public enum StreamCredential: Sendable {
     case password(user: String, password: String)
     case bearer(String)
@@ -197,6 +213,7 @@ public struct ServerRefusal: Equatable, Sendable {
 public final class PlayerController {
     public private(set) var phase: PlayerPhase = .loading
     public private(set) var serverRefusal: ServerRefusal?
+    public private(set) var authRequest: AuthRequest?
     public private(set) var stats = PlayerStats()
     /// Output frame rate once known; changes rarely (views can observe it
     /// without redrawing on every stats update).
@@ -325,6 +342,7 @@ public final class PlayerController {
         renderer.endSession()
         phase = .loading
         serverRefusal = nil
+        authRequest = nil
     }
 
     private func startMonitoring(pipe: Pipeline, gen: Int, source: ClientSource) {
@@ -348,11 +366,15 @@ public final class PlayerController {
                 if s.state == .running { played = true }
                 if let ae = pipe.sessionAuthEvent {
                     switch ae {
-                    case .authRequired(_, _, let origin, _):
+                    case .authRequired(let scheme, let realm, let origin, let metadata):
                         authHost = URL(string: origin)?.host ?? origin
+                        self.authRequest = AuthRequest(scheme: scheme, realm: realm, origin: origin, resourceMetadata: metadata, rejected: false)
                         self.phase = .needsCredentials(host: authHost ?? "")
                         continue
                     case .authRejected:
+                        if let a = self.authRequest {
+                            self.authRequest = AuthRequest(scheme: a.scheme, realm: a.realm, origin: a.origin, resourceMetadata: a.resourceMetadata, rejected: true)
+                        }
                         self.phase = .needsCredentials(host: authHost ?? "")
                         continue
                     case .forbidden:
