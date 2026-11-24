@@ -4,9 +4,8 @@ A native IPTV player for Apple TV and iPad, written in Swift and SwiftUI.
 It plays live MPEG-TS channels from an M3U playlist you provide, with a
 programme guide from the playlist's XMLTV `url-tvg`.
 
-Zenith Player ships no channels and no server. Point it at your own
-playlist, or run a Zenith server on your
-network and the app finds it over Bonjour (`_zenith._tcp`).
+Zenith Player ships no channels. Enter the address of an M3U playlist of
+MPEG-TS streams and it plays them.
 
 ## Features
 
