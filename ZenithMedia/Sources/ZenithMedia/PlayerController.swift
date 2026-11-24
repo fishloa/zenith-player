@@ -256,6 +256,16 @@ public final class PlayerController {
     /// Frame rate the jump margin is measured at (the fastest broadcast rate).
     nonisolated static let decodeAheadNominalFPS = 50.0
 
+    /// A queued frame past the decode window is skipped only across a gap in
+    /// decode time after the last frame handed to the decoder (a new
+    /// timeline). Frames back to back with it are the stream itself, ahead of
+    /// a clock that has not started yet: they wait.
+    nonisolated static func skipsAhead(next: CMTime, lastHanded: CMTime?, later: CMTime) -> Bool {
+        guard let lastHanded, next >= later else { return false }
+        let margin = CMTime(seconds: Double(decodeAheadJumpFrames) / decodeAheadNominalFPS, preferredTimescale: 90000)
+        return next - lastHanded > margin
+    }
+
     /// Interlaced unless transmux says the coding is progressive (R3).
     public nonisolated static func codedInterlaced(_ t: TrackInfo) -> Bool {
         t.scan == .paff || t.scan == .mbaff || t.scan == .fieldSequence
@@ -513,6 +523,8 @@ final class Pipeline: @unchecked Sendable {
     private var lastAudioEnd: CMTime?
     /// Demuxed, not yet decoded video (decode order).
     private var videoQ: [MediaSample] = []
+    /// Decode time of the newest frame handed to the decode worker.
+    private var lastHandedDTS: Int64?
     /// Selected-track audio not yet handed to the renderer.
     private var audioQ: [MediaSample] = []
     /// Decoded before the first start (at most decodeAhead of it).
@@ -816,7 +828,7 @@ final class Pipeline: @unchecked Sendable {
         old.decoder.invalidate()
         video = (t, dec, deinterlacer(for: t, reusing: old.deint))
         submittedGeometry[t.trackID] = nil
-        if rejoin { videoQ = [] }
+        if rejoin { videoQ = []; lastHandedDTS = nil }
         updateRenderedTracks()
     }
 
@@ -861,7 +873,7 @@ final class Pipeline: @unchecked Sendable {
         if let v = video { replaceDecoder(v.info, rejoin: true) }
         video?.deint?.reset()
         if newTimeline { audioQ = [] }
-        startPTS = nil; lastVideoPTS = nil; videoQ = []; bufferedVideo = []
+        startPTS = nil; lastVideoPTS = nil; videoQ = []; lastHandedDTS = nil; bufferedVideo = []
         if newTimeline { lastAudioEnd = nil }
         started = false; paused = false; holdAt = .invalid; startAllowed = false; sessionStart = nil
         playerJoin = rejoinSession && !fromSession
@@ -919,11 +931,12 @@ final class Pipeline: @unchecked Sendable {
             if room > 0, let s = videoQ.first, videoTime(s.dts) < window {
                 videoQ.removeFirst()
                 decodedQ.append(s)
+                lastHandedDTS = s.dts
                 room -= 1
                 continue
             }
-            // The decode window ends later on: samples past it wait unused.
-            guard let s = videoQ.first, videoTime(s.dts) >= later else { break }
+            guard let s = videoQ.first,
+                  PlayerController.skipsAhead(next: videoTime(s.dts), lastHanded: lastHandedDTS.map(videoTime), later: later) else { break }
             videoQ.removeFirst()
             lock.lock(); stats.framesDropped += 1; lock.unlock()
             skipped += 1

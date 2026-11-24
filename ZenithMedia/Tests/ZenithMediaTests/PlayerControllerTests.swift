@@ -427,6 +427,26 @@ final class PlayerControllerTests: XCTestCase {
         c.stop()
     }
 
+    /// A file served faster than real time arrives whole before the clock
+    /// runs (the synchronizer defers its start until the display has
+    /// prerolled). Frames queued back to back past the decode window are the
+    /// rest of the stream, not a new timeline: skipping them emptied the
+    /// demo channels after one frame.
+    func testContiguousBacklogPastTheWindowIsKept() {
+        let later = CMTime(seconds: 3.06, preferredTimescale: 90000)
+        let handed = CMTime(seconds: 3.08, preferredTimescale: 90000)
+        XCTAssertFalse(PlayerController.skipsAhead(next: CMTime(seconds: 3.12, preferredTimescale: 90000), lastHanded: handed, later: later))
+        XCTAssertFalse(PlayerController.skipsAhead(next: CMTime(seconds: 3.12, preferredTimescale: 90000), lastHanded: nil, later: later))
+    }
+
+    func testFramesPastATimelineJumpAreSkipped() {
+        let later = CMTime(seconds: 3.06, preferredTimescale: 90000)
+        let handed = CMTime(seconds: 2.96, preferredTimescale: 90000)
+        XCTAssertTrue(PlayerController.skipsAhead(next: CMTime(seconds: 12.0, preferredTimescale: 90000), lastHanded: handed, later: later))
+        XCTAssertFalse(PlayerController.skipsAhead(next: CMTime(seconds: 3.0, preferredTimescale: 90000), lastHanded: handed, later: later),
+                       "inside the jump margin it waits for the clock")
+    }
+
     /// Buffering happens before the decoder: with 10 s of media delivered at
     /// once, decoded video stays within ~0.6 s of the clock (memory: decoded
     /// 1080 frames are ~3 MB each) while the compressed buffer holds the rest.
